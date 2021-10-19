@@ -205,10 +205,11 @@ def make_equipamentos(se):
   for memo_row in range(1, memo.max_row + 1):
     cell = memo[f'{conferencia_column}{memo_row}']
     if cell.value == "Demais equipamentos de pátio" or cell.value == "Transformador de Força" or cell.value == "GIS / Módulo Híbrido":
-      if memo[f'{subestacao_column}{memo_row}'].value == se:
+      if memo[f'{subestacao_column}{memo_row}'].value == se and int(memo[f'{qte_column}{memo_row}'].value) > 0:
         exit = False
+  print(exit)
   if exit:
-    return 0
+    return
 
   se_names = get_se_names()
   se_count = 0
@@ -241,7 +242,7 @@ def make_casa(se):
   for memo_row in range(1, memo.max_row + 1):
     cell = memo[f'{conferencia_column}{memo_row}']
     if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
-      if memo[f'{subestacao_column}{memo_row}'].value == se:
+      if memo[f'{subestacao_column}{memo_row}'].value == se and memo[f'{qte_column}{memo_row}'].value >= 1:
         exit = False
   if exit:
     return 0
