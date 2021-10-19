@@ -257,19 +257,21 @@ def make_casa(se):
       
       planilha_preco.cell(row=planilha_preco_row, column=2, value="CASA DE COMANDO")
     
-  make_cubiculos(se)
+  make_casa_itens(se, "Cubículos", "CUBÍCULOS DE MÉDIA TENSÃO")
+  make_casa_itens(se, "Proteção, medição e controle", "PROTEÇÃO, MEDIÇÃO E CONTROLE")
+  make_casa_itens(se, "Telecomunicações", "TELECOMUNICAÇÕES")
+  make_casa_itens(se, "Serviços Auxiliares", "SERVIÇOS AUXILIARES")
 
 
-def make_cubiculos(se):
+def make_casa_itens(se, memo_value, planilha_precos_title):
   exit = True
   for memo_row in range(1, memo.max_row + 1):
     cell = memo[f'{conferencia_column}{memo_row}']
-    if cell.value == "Cubículos":
+    if cell.value == memo_value:
       if memo[f'{subestacao_column}{memo_row}'].value == se and int(memo[f'{qte_column}{memo_row}'].value) > 0:
         exit = False
   if exit:
     return
-
   se_names = get_se_names()
   se_count = 0
   for planilha_preco_row in range(1, 1000):
@@ -285,23 +287,20 @@ def make_cubiculos(se):
         new_cell = planilha_preco.cell(row=planilha_preco_row, column=planilha_preco_column, value="")
         new_cell._style = copy(copy_cell._style)
 
-      planilha_preco.cell(row=planilha_preco_row, column=2, value="CUBÍCULOS DE MÉDIA TENSÃO")
+      planilha_preco.cell(row=planilha_preco_row, column=2, value=planilha_precos_title)
 
       for row in range(1, memo.max_row + 1):
         cell = memo[f'{conferencia_column}{row}']
-        if cell.value == "Cubículos":
+        if cell.value == memo_value:
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
             complete_cells(planilha_preco_row, row, i)
             i += 1
   
-  make_taxes(se=se, subtopico='CUBÍCULOS DE MÉDIA TENSÃO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
-
-
+  make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
 def make_eletrica(se):
-  #make_equipamentos(se)
+  make_equipamentos(se)
   make_casa(se)
-
 
 def build():
   se_names = get_se_names()
