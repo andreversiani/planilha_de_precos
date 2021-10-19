@@ -67,7 +67,7 @@ def make_titles(names_se):
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
           
 
-def make_engenharia():
+def make_engenharia(resumo=None):
   
   for planilha_preco_row in range(1, 1000):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
@@ -99,6 +99,15 @@ def make_engenharia():
           planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"=$H${planilha_preco_row+1}")
           planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"=$J${planilha_preco_row+1}")
           planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
+
+          planilha_preco.cell(row=planilha_preco_row + i, column=5, value=f"=L{planilha_preco_row + i}-K{planilha_preco_row + i}-I{planilha_preco_row + i}-G{planilha_preco_row + i}")
+          planilha_preco.cell(row=planilha_preco_row + i, column=7, value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
+          planilha_preco.cell(row=planilha_preco_row + i, column=9, value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
+          planilha_preco.cell(row=planilha_preco_row + i, column=11, value=f"=L{planilha_preco_row + i}*J{planilha_preco_row + i}/100")
+          planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+{planilha_preco_row + i}/100)")
+          planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
+          planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
+          
           
           #estilos
           for column in range(1, planilha_preco.max_column + 1):
@@ -114,6 +123,8 @@ def make_engenharia():
       planilha_preco.cell(row=planilha_preco_row + 1, column=10, value=f"='[{mc_name}]DashBoard'!{iss_bh}")
       planilha_preco.cell(row=planilha_preco_row + 1, column=13, value=0)
 
+
+  
 
 
 names_se = get_se_names()
