@@ -12,7 +12,11 @@ planilha_preco = wb_planilha_preco['Teste']
 memo = wb_mc['Memo Geral']
 db = wb_mc['DashBoard']
 
-  
+conferencia_column = 'X'
+descricao_column = 'B'
+subestacao_column = 'Z'
+qte_column = 'D'
+
 def get_se_names():
   names_se = []
   for row in range(1, memo.max_row):
@@ -54,13 +58,24 @@ def make_titles(names_se):
           if row == total_row and column == 1:
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
           
-          if row >= total_row + 1 and column == 1:
-            planilha_preco.cell(row=row, column=column, value=str(f'{names_se.index(se) + 1}.{row-total_row}')) #preenche os restantes dos itens
-          
-       
-          
 
+def make_engenharia():
+  
+  for planilha_preco_row in range(1, 1000):
+    if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
+      se = str(planilha_preco[f'B{planilha_preco_row - 1}'].value)
+      print(se)
+      i = 1
+      for row in range(1, memo.max_row + 1):
+        if memo[f'{conferencia_column}{row}'].value == "Projetos" and memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
+          planilha_preco.insert_rows(planilha_preco_row + i, 1)
+          planilha_preco.cell(row=planilha_preco_row + i, column=2, value=f"='[{mc_name}]Memo Geral'!$B${row}")
+          planilha_preco.cell(row=planilha_preco_row + i, column=3, value=f"='[{mc_name}]Memo Geral'!$D${row}")
+          planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]Memo Geral'!T${row}")
+          i += 1
+        
 
 names_se = get_se_names()
 make_titles(names_se)
+make_engenharia()
 wb_planilha_preco.save('Nova.xlsx')
