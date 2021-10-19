@@ -67,8 +67,7 @@ def make_titles(names_se):
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
           
 
-def make_engenharia(resumo=None):
-  
+def make_engenharia():
   for planilha_preco_row in range(1, 1000):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
       se = str(planilha_preco[f'B{planilha_preco_row - 1}'].value)
@@ -108,7 +107,10 @@ def make_engenharia(resumo=None):
           planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
           planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
           
-          
+          #indices
+          planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{planilha_preco_row-1}&".1"')
+          planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row-1}&".{i}"')
+
           #estilos
           for column in range(1, planilha_preco.max_column + 1):
             cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
@@ -124,7 +126,6 @@ def make_engenharia(resumo=None):
       planilha_preco.cell(row=planilha_preco_row + 1, column=13, value=0)
 
 
-  
 
 
 names_se = get_se_names()
