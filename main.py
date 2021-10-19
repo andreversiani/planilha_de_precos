@@ -67,27 +67,24 @@ def complete_cells(planilha_preco_row, row, i):
     cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
 
 def make_taxes(se, subtopico, pis_confins, icms, iss, ipi):
-  se_count = 0
-  se_names = get_se_names()
-
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value in se_names:
-      se_count += 1
-
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value == subtopico and se_count == se_names.index(se) + 1:
-      
-      if icms == 0:
-        planilha_preco.cell(row=planilha_preco_row + 1, column=8, value=0) #icms
-      else:
-        planilha_preco.cell(row=planilha_preco_row + 1, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100") #icms
-      if iss == 0:
-        planilha_preco.cell(row=planilha_preco_row + 1, column=10, value=0) #iss
-      else:
-        planilha_preco.cell(row=planilha_preco_row + 1, column=10, value=f"='[{mc_name}]DashBoard'!{iss}") #iss
-      
-      planilha_preco.cell(row=planilha_preco_row + 1, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins}") #pis/confins 
-      planilha_preco.cell(row=planilha_preco_row + 1, column=13, value=f"='[{mc_name}]DashBoard'!{ipi}") #ipi
+  row = 1
+  while planilha_preco[f'B{row}'].value != se:
+    row += 1
+  while planilha_preco[f'B{row}'].value != subtopico:
+    row += 1
+  row += 1
+  
+  if icms == 0:
+    planilha_preco.cell(row=row, column=8, value=0) #icms
+  else:
+    planilha_preco.cell(row=row, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100") #icms
+  if iss == 0:
+    planilha_preco.cell(row=row, column=10, value=0) #iss
+  else:
+    planilha_preco.cell(row=row, column=10, value=f"='[{mc_name}]DashBoard'!{iss}") #iss
+    
+  planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins}") #pis/confins 
+  planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]DashBoard'!{ipi}") #ipi
 
 def get_se_names():
   names_se = []
@@ -141,7 +138,6 @@ def make_engenharia(se):
         if memo[f'{conferencia_column}{row}'].value == "Projetos" and memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
           complete_cells(planilha_preco_row, row, i)
           i += 1
-          #impostos
   make_taxes(se=se, subtopico='ENGENHARIA', pis_confins=pis_confins_eq, icms=0, iss=iss_bh, ipi=ipi)
 
 
@@ -207,7 +203,6 @@ def make_equipamentos(se):
     if cell.value == "Demais equipamentos de pátio" or cell.value == "Transformador de Força" or cell.value == "GIS / Módulo Híbrido":
       if memo[f'{subestacao_column}{memo_row}'].value == se and int(memo[f'{qte_column}{memo_row}'].value) > 0:
         exit = False
-  print(exit)
   if exit:
     return
 
@@ -261,9 +256,50 @@ def make_casa(se):
         new_cell._style = copy(copy_cell._style)
       
       planilha_preco.cell(row=planilha_preco_row, column=2, value="CASA DE COMANDO")
+    
+  make_cubiculos(se)
+
+
+def make_cubiculos(se):
+  exit = True
+  for memo_row in range(1, memo.max_row + 1):
+    cell = memo[f'{conferencia_column}{memo_row}']
+    if cell.value == "Cubículos":
+      if memo[f'{subestacao_column}{memo_row}'].value == se and int(memo[f'{qte_column}{memo_row}'].value) > 0:
+        exit = False
+  if exit:
+    return
+
+  se_names = get_se_names()
+  se_count = 0
+  for planilha_preco_row in range(1, 1000):
+    if planilha_preco[f'B{planilha_preco_row}'].value == 'CIVIL':
+      se_count += 1
   
+    if planilha_preco[f'B{planilha_preco_row}'].value == 'CIVIL' and se_count == se_names.index(se) + 1:
+      i = 1
+      planilha_preco.insert_rows(planilha_preco_row, 1)
+      
+      for planilha_preco_column in range(1, planilha_preco.max_column + 1):
+        copy_cell = styles[f'{get_column_letter(planilha_preco_column)}5']
+        new_cell = planilha_preco.cell(row=planilha_preco_row, column=planilha_preco_column, value="")
+        new_cell._style = copy(copy_cell._style)
+
+      planilha_preco.cell(row=planilha_preco_row, column=2, value="CUBÍCULOS DE MÉDIA TENSÃO")
+
+      for row in range(1, memo.max_row + 1):
+        cell = memo[f'{conferencia_column}{row}']
+        if cell.value == "Cubículos":
+          if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
+            complete_cells(planilha_preco_row, row, i)
+            i += 1
+  
+  make_taxes(se=se, subtopico='CUBÍCULOS DE MÉDIA TENSÃO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
+
+
+
 def make_eletrica(se):
-  make_equipamentos(se)
+  #make_equipamentos(se)
   make_casa(se)
 
 
