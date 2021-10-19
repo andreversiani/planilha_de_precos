@@ -58,8 +58,8 @@ def complete_cells(planilha_preco_row, row, i):
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
   
   #indices
-  planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{planilha_preco_row-1}&".1"')
-  planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row-1}&".{i}"')
+  #planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{planilha_preco_row-1}&".1"')
+  #planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row-1}&".{i}"')
   
   #estilos
   for column in range(1, planilha_preco.max_column + 1):
@@ -199,9 +199,6 @@ def make_servicos_gerais(se):
 
   make_taxes(se=se, subtopico='SERVIÇOS GERAIS', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
 
-def make_eletrica(se):
-  make_equipamentos(se)
-
 
 def make_equipamentos(se):
   exit = True
@@ -222,7 +219,7 @@ def make_equipamentos(se):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'ELÉTRICA' and se_count == se_names.index(se) + 1:
       i = 1
       planilha_preco.insert_rows(planilha_preco_row + 1, 1)
-
+      
       for planilha_preco_column in range(1, planilha_preco.max_column + 1):
         copy_cell = styles[f'{get_column_letter(planilha_preco_column)}4']
         new_cell = planilha_preco.cell(row=planilha_preco_row + 1, column=planilha_preco_column, value="")
@@ -239,7 +236,35 @@ def make_equipamentos(se):
   
   make_taxes(se=se, subtopico='EQUIPAMENTOS DE PÁTIO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
+def make_casa(se):
+  exit = True
+  for memo_row in range(1, memo.max_row + 1):
+    cell = memo[f'{conferencia_column}{memo_row}']
+    if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
+      if memo[f'{subestacao_column}{memo_row}'].value == se:
+        exit = False
+  if exit:
+    return 0
+
+  se_names = get_se_names()
+  se_count = 0
+  for planilha_preco_row in range(1, 1000):
+    if planilha_preco[f'B{planilha_preco_row}'].value == 'CIVIL':
+      se_count += 1
+    if planilha_preco[f'B{planilha_preco_row}'].value == 'CIVIL' and se_count == se_names.index(se) + 1:
+      planilha_preco.insert_rows(planilha_preco_row, 1)
+
+      for planilha_preco_column in range(1, planilha_preco.max_column + 1):
+        copy_cell = styles[f'{get_column_letter(planilha_preco_column)}4']
+        new_cell = planilha_preco.cell(row=planilha_preco_row, column=planilha_preco_column, value="")
+        new_cell._style = copy(copy_cell._style)
+      
+      planilha_preco.cell(row=planilha_preco_row, column=2, value="CASA DE COMANDO")
   
+def make_eletrica(se):
+  make_equipamentos(se)
+  make_casa(se)
+
 
 def build():
   se_names = get_se_names()
