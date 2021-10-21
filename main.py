@@ -1,24 +1,30 @@
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from copy import copy
+import os
+
 
 planilha_preco_name = 'F4792-001-00 - PC - ANEXO 01 - Planilha de Preço.xlsx'
 mc_name = 'F4792-001-00 - MC - PIAUÍ NÍQUEL - Bay de Saída 230 kV.xlsm'
 
-wb_planilha_preco = load_workbook(planilha_preco_name)
+wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
 wb_mc = load_workbook(mc_name, data_only=True)
 
 planilha_preco = wb_planilha_preco['Teste']
+resumo = wb_planilha_preco['Resumo_Teste']
 styles = wb_planilha_preco['Styles']
 memo = wb_mc['Memo Geral']
 db = wb_mc['DashBoard']
 
+#colunas
 conferencia_column = 'X'
 descricao_column = 'B'
 subestacao_column = 'Z'
 qte_column = 'D'
 preco_impostos_column = 'T'
+erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
 
+#impostos
 pis_confins_eq = '$M$14'
 pis_confins_sv = '$M$13'
 icms = '$M$22'
@@ -26,7 +32,19 @@ iss_bh = '$M$15'
 iss_cliente = '$M$16'
 ipi = "$M$12"
 
-def complete_cells(planilha_preco_row, row, i):
+#cores
+azul_escuro = "FFC5D9F1"
+laranja = "FFFDE9D9"
+branco = "FFFFFFFF"
+
+titles = ["ENGENHARIA", "ELÉTRICA", "CIVIL", "MONTAGEM", "SERVIÇOS GERAIS"]
+
+def get_se_row(se):
+  for row in range(1, planilha_preco.max_row):
+    if planilha_preco[f'B{row}'].value == se:
+      return row
+
+def complete_cells(se, planilha_preco_row, row, i, type=None):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
   #Somas
   planilha_preco.cell(row=planilha_preco_row, column=16, value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
@@ -57,11 +75,13 @@ def complete_cells(planilha_preco_row, row, i):
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
   
-  #indices
-  #planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{planilha_preco_row-1}&".1"')
-  #planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row-1}&".{i}"')
+  if type == "Engenharia":
+    pass
+    #indices
+    #planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{get_se_row(se)}&".{i}"')
+    #planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row}&".{i}"')
   
-  #estilos
+  #styles
   for column in range(1, planilha_preco.max_column + 1):
     cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
     cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
@@ -102,6 +122,7 @@ def get_total_row():
 
 def make_titles(names_se):
   print('Fazendo os títulos')
+  i = 1
   for se in names_se:
     if names_se.index(se) == 0: #preencher caso for a primeira SE
       planilha_preco.cell(row=4, column=1,value=str(se)) # Nome do título
@@ -113,7 +134,7 @@ def make_titles(names_se):
       
       for row in range(total_row, total_row + 6):
         for column in range(1, planilha_preco.max_column + 1):
-        
+          
           copy_cell = planilha_preco[f'{get_column_letter(column)}{row-6}']
           new_cell = planilha_preco.cell(row=row, column=column, value="")
           new_cell._style = copy(copy_cell._style)
@@ -128,6 +149,8 @@ def make_titles(names_se):
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
           
 
+          
+
 def make_engenharia(se):
   print(f'{se.upper()} | Escrevendo a parte de Engenharia')
   for planilha_preco_row in range(1, 1000):
@@ -136,7 +159,7 @@ def make_engenharia(se):
       i = 1
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Projetos" and memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-          complete_cells(planilha_preco_row, row, i)
+          complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
           i += 1
   make_taxes(se=se, subtopico='ENGENHARIA', pis_confins=pis_confins_eq, icms=0, iss=iss_bh, ipi=ipi)
 
@@ -154,7 +177,7 @@ def make_civil(se, se_names):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Obras Civis" or memo[f'{conferencia_column}{row}'].value == "Canteiro / Mobilização":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
             i += 1
   #impostos
   make_taxes(se=se, subtopico='CIVIL', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -172,7 +195,7 @@ def make_montagem(se, se_names):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
             i += 1
   #impostos
   make_taxes(se=se, subtopico='MONTAGEM', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -190,7 +213,7 @@ def make_servicos_gerais(se):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Treinamento" or memo[f'{conferencia_column}{row}'].value == "Comissionamento" or memo[f'{conferencia_column}{row}'].value == "Supervisão de Montagem" or memo[f'{conferencia_column}{row}'].value == "Administração de Obra" or memo[f'{conferencia_column}{row}'].value == "Frete" or memo[f'{conferencia_column}{row}'].value == "Despesas de Viagem":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
             i += 1
 
   make_taxes(se=se, subtopico='SERVIÇOS GERAIS', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -227,7 +250,7 @@ def make_equipamentos(se):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == "Demais equipamentos de pátio" or cell.value == "GIS / Módulo Híbrido" or cell.value == "Transformador de Força":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row + 1, row, i)
+            complete_cells(se, planilha_preco_row + 1, row, i, type='Equipamentos')
             i += 1
   
   make_taxes(se=se, subtopico='EQUIPAMENTOS DE PÁTIO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
@@ -293,14 +316,45 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == memo_value:
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            complete_cells(se, planilha_preco_row, row, i, type='Casa')
             i += 1
   
   make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
+
+
 def make_eletrica(se):
   make_equipamentos(se)
   make_casa(se)
+
+def make_resumo():
+  total_row = get_total_row()
+  for row in range(8, total_row + 1):
+    for column in range(1, planilha_preco.max_column + 1):
+      copy_cell = planilha_preco[f'{get_column_letter(column)}{row}']
+      cell = resumo[f'{get_column_letter(column)}{row}']
+      cell._style = copy(copy_cell._style)
+      title = planilha_preco[f'B{row}'].value
+      title_index = planilha_preco[f'A{row}'].value
+
+      if get_column_letter(column) not in erase_columns:
+        cell.value = f'=Teste!{get_column_letter(column)}{row}'
+
+      if title in titles or title_index in range(1, 101):
+        cell.value = f'=Teste!{get_column_letter(column)}{row}'
+
+  for row in range(8, total_row + 1):
+    erase_cell = resumo[f'{qte_column}{row}']
+    erase_cell_color = erase_cell.fill.start_color.rgb
+    if erase_cell_color != branco:
+      resumo.cell(row=row, column=3, value="")
+      resumo.cell(row=row, column=4, value="")
+      resumo.cell(row=row, column=6, value="")
+      resumo.cell(row=row, column=8, value="")
+      resumo.cell(row=row, column=10, value="")
+      resumo.cell(row=row, column=13, value="")
+
+  resumo.cell(row=total_row, column=2, value="")
 
 def build():
   se_names = get_se_names()
@@ -311,6 +365,9 @@ def build():
     make_civil(se, se_names)
     make_montagem(se, se_names)
     make_servicos_gerais(se)
+  
+  make_resumo()
+   
 
 build()
-wb_planilha_preco.save('Nova.xlsx')
+wb_planilha_preco.save('Nova.xlsx') 
