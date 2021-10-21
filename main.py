@@ -285,7 +285,6 @@ def make_casa(se):
   make_casa_itens(se, "Telecomunicações", "TELECOMUNICAÇÕES")
   make_casa_itens(se, "Serviços Auxiliares", "SERVIÇOS AUXILIARES")
 
-
 def make_casa_itens(se, memo_value, planilha_precos_title):
   exit = True
   for memo_row in range(1, memo.max_row + 1):
@@ -321,11 +320,25 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
   
   make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
-
-
 def make_eletrica(se):
   make_equipamentos(se)
   make_casa(se)
+
+def make_total_sums():
+  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+  total_row = get_total_row()
+  for column in total_columns:
+    formula = "=SUM("
+    for row in range(1, total_row + 1):
+      cell = planilha_preco[f'{get_column_letter(column)}{row}']
+      cell_color = cell.fill.start_color.rgb
+      if cell_color == laranja:
+        coordenada = cell.coordinate
+        formula += coordenada + ","
+    formula = formula[:-1]
+    formula += ")"
+    planilha_preco[f'{get_column_letter(column)}{total_row}'].value = formula
+    #planilha_preco.cell(row=total_row, column=column, value=formula)
 
 def make_resumo():
   total_row = get_total_row()
@@ -340,7 +353,7 @@ def make_resumo():
       if get_column_letter(column) not in erase_columns:
         cell.value = f'=Teste!{get_column_letter(column)}{row}'
 
-      if title in titles or title_index in range(1, 101):
+      if title in titles or title_index in range(1, 101) or row == total_row:
         cell.value = f'=Teste!{get_column_letter(column)}{row}'
 
   for row in range(8, total_row + 1):
@@ -365,9 +378,9 @@ def build():
     make_civil(se, se_names)
     make_montagem(se, se_names)
     make_servicos_gerais(se)
-  
+  make_total_sums()
   make_resumo()
    
-
 build()
+
 wb_planilha_preco.save('Nova.xlsx') 
