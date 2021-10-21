@@ -339,6 +339,26 @@ def make_total_sums():
     formula += ")"
     planilha_preco[f'{get_column_letter(column)}{total_row}'].value = formula
 
+def make_se_sums(se):
+  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+  se_info = get_se_status(se)
+  
+  first_row = se_info['first_row']
+  se_info = se_info['last_row']
+  
+  for column in total_columns:
+    formula = "=SUM("
+    for row in range(se_info['first_row'], se_info['last_row'] + 1):
+      cell = planilha_preco[f'{get_column_letter(column)}{row}']
+      cell_color = cell.fill.start_color.rgb
+      if cell_color == azul_escuro:
+        coordenada = cell.coordinate
+        formula += coordenada + ","
+    formula = formula[:-1]
+    formula += ")"
+    
+    planilha_preco[f'{get_column_letter(column)}{first_row}'].value = formula
+
 def make_resumo():
   total_row = get_total_row()
   for row in range(8, total_row + 1):
@@ -369,26 +389,24 @@ def make_resumo():
   resumo.cell(row=total_row, column=2, value="")
 
 def get_se_status(se):
-  
   se_status = {
     "name": se,
     "first_row": 0,
     "last_row": 0
   }
-
   total_row = get_total_row()
   for row in range(8, total_row):
     title = planilha_preco[f'B{row}'].value
     
     if title[:3] == "SE " and se_status["first_row"] > 0:
-      se_status["last_row"] = row
+      se_status["last_row"] = row - 1
 
     if title == se:
       se_status["first_row"] = row
 
-    if row == total_row - 1:
+    if row == total_row - 1 and se_status['last_row'] == 0:
       se_status["last_row"] = total_row - 1
-    
+  
   return se_status
 
 def build():
@@ -400,7 +418,7 @@ def build():
     make_civil(se, se_names)
     make_montagem(se, se_names)
     make_servicos_gerais(se)
-    print(get_se_status(se))
+    make_se_sums(se)
   make_total_sums()
   make_resumo()
    
