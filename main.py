@@ -124,12 +124,13 @@ def get_total_row():
 
 def make_titles(names_se):
   print('Fazendo os títulos')
-  i = 1
   for se in names_se:
+    
     if names_se.index(se) == 0: #preencher caso for a primeira SE
       planilha_preco.cell(row=4, column=1,value=str(se)) # Nome do título
       planilha_preco.cell(row=8, column=2, value=str(se)) # Nome da primeira SE
-    
+      planilha_preco.cell(row=8, column=1, value=int(names_se.index(se) + 1))
+      
     else: #preenche o restante das SEs
       total_row = get_total_row()
       planilha_preco.insert_rows(total_row, 6)
