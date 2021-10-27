@@ -63,7 +63,7 @@ def get_se_row(se):
     if planilha_preco[f'B{row}'].value == se:
       return row
 
-def complete_cells(se, planilha_preco_row, row, i, type=None):
+def complete_cells(planilha_preco_row, row, i):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
   #Somas
   planilha_preco.cell(row=planilha_preco_row, column=16, value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
@@ -94,25 +94,23 @@ def complete_cells(se, planilha_preco_row, row, i, type=None):
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
   
-  if type == "Engenharia":
-    pass
-    #indices
-    #planilha_preco.cell(row=planilha_preco_row, column=1, value=f'=A{get_se_row(se)}&".{i}"')
-    #planilha_preco.cell(row=planilha_preco_row + i, column=1, value=f'=A{planilha_preco_row}&".{i}"')
-  
   #styles
   for column in range(1, planilha_preco.max_column + 1):
     cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
     cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
 
-def make_taxes(se, subtopico, pis_confins, icms, iss, ipi):
-  row = 1
-  while planilha_preco[f'B{row}'].value != se:
+def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, sobressalente_row = None):
+  if subtopico != "SOBRESSALENTES":
+    row = 1
+    while planilha_preco[f'B{row}'].value != se:
+      row += 1
+    while planilha_preco[f'B{row}'].value != subtopico:
+      row += 1
     row += 1
-  while planilha_preco[f'B{row}'].value != subtopico:
-    row += 1
-  row += 1
   
+  if subtopico == "SOBRESSALENTES":
+    row = sobressalente_row
+
   if icms == 0:
     planilha_preco.cell(row=row, column=8, value=0) #icms
   else:
@@ -124,6 +122,7 @@ def make_taxes(se, subtopico, pis_confins, icms, iss, ipi):
     
   planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins}") #pis/confins 
   planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]DashBoard'!{ipi}") #ipi
+
 
 def get_se_names():
   names_se = []
@@ -176,7 +175,7 @@ def make_engenharia(se):
       i = 1
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Projetos" and memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-          complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
+          complete_cells(planilha_preco_row, row, i)
           i += 1
   make_taxes(se=se, subtopico='ENGENHARIA', pis_confins=pis_confins_eq, icms=0, iss=iss_bh, ipi=ipi)
 
@@ -193,7 +192,7 @@ def make_civil(se, se_names):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Obras Civis" or memo[f'{conferencia_column}{row}'].value == "Canteiro / Mobilização":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
+            complete_cells(planilha_preco_row, row, i)
             i += 1
   #impostos
   make_taxes(se=se, subtopico='CIVIL', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -211,7 +210,7 @@ def make_montagem(se, se_names):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
+            complete_cells(planilha_preco_row, row, i)
             i += 1
   #impostos
   make_taxes(se=se, subtopico='MONTAGEM', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -229,7 +228,7 @@ def make_servicos_gerais(se):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Treinamento" or memo[f'{conferencia_column}{row}'].value == "Comissionamento" or memo[f'{conferencia_column}{row}'].value == "Supervisão de Montagem" or memo[f'{conferencia_column}{row}'].value == "Administração de Obra" or memo[f'{conferencia_column}{row}'].value == "Frete" or memo[f'{conferencia_column}{row}'].value == "Despesas de Viagem":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
+            complete_cells(planilha_preco_row, row, i)
             i += 1
 
   make_taxes(se=se, subtopico='SERVIÇOS GERAIS', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
@@ -266,7 +265,7 @@ def make_equipamentos(se):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == "Demais equipamentos de pátio" or cell.value == "GIS / Módulo Híbrido" or cell.value == "Transformador de Força":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(se, planilha_preco_row + 1, row, i, type='Equipamentos')
+            complete_cells(planilha_preco_row + 1, row, i)
             i += 1
   
   make_taxes(se=se, subtopico='EQUIPAMENTOS DE PÁTIO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
@@ -331,7 +330,7 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == memo_value:
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(se, planilha_preco_row, row, i, type='Casa')
+            complete_cells(planilha_preco_row, row, i)
             i += 1
   
   make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
@@ -540,6 +539,52 @@ def make_resumo():
 
   resumo.cell(row=total_row, column=2, value="")
 
+def make_sobressalentes():
+  exit = True
+  for memo_row in range(1, memo.max_row + 1):
+    cell = memo[f'{conferencia_column}{memo_row}']
+    if cell.value == "Sobressalentes" and int(memo[f'{qte_column}{memo_row}'].value):
+        exit = False
+  if exit:
+    return 0
+  
+  indice = len(get_se_names()) + 1
+  total_row = get_total_row()
+  planilha_preco.insert_rows(total_row, 1)
+  sobressalente_row = total_row
+
+  #TÍTULO
+  for planilha_preco_column in range(1, planilha_preco.max_column + 1):
+    copy_cell = styles[f'{get_column_letter(planilha_preco_column)}1']
+    new_cell = planilha_preco.cell(row=sobressalente_row, column=planilha_preco_column, value=None)
+    new_cell._style = copy(copy_cell._style)
+    planilha_preco.cell(row=sobressalente_row, column=2, value='SOBRESSALENTES')
+    planilha_preco.cell(row=sobressalente_row, column=1, value=indice)
+
+  #LINHAS EM BRANCO
+  i = 0
+  for memo_row in range(1, memo.max_column):
+    conferencia_cell = memo[f'{conferencia_column}{memo_row}']
+    if conferencia_cell.value == "Sobressalentes":
+      complete_cells(sobressalente_row + 1, memo_row, i)
+      i += 1
+  make_taxes(se='Sobressalentes', subtopico='SOBRESSALENTES', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi, sobressalente_row=sobressalente_row+1)
+
+  #SOMAS
+  total_row = get_total_row()
+  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+  for column in total_columns:
+    column_letter = get_column_letter(column)
+    formula = f'=SUM({column_letter}{sobressalente_row+1}:{column_letter}{total_row - 1})'
+    cell = planilha_preco[f'{column_letter}{sobressalente_row}']
+    cell.value = formula
+
+  #ÍNDICE
+  i = 1
+  for row in range(sobressalente_row + 1, total_row):
+    cell = planilha_preco[f'A{row}']
+    cell.value = f'=A{sobressalente_row} & ".{i}"'
+
 def get_se_status(se):
   se_status = {
     "name": se,
@@ -574,9 +619,12 @@ def build():
     make_eletrica_sums(se)
     make_casa_comando_sums(se)
     make_indices(se)
+  
+  make_sobressalentes()
   make_total_sums()
   make_resumo()
-  
+
+
     
 build()
 wb_planilha_preco.save('Nova.xlsx') 
