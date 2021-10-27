@@ -147,10 +147,7 @@ def make_titles(names_se):
 
           if row == total_row and column == 1:
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
-          
-
-          
-
+        
 def make_engenharia(se):
   print(f'{se.upper()} | Escrevendo a parte de Engenharia')
   for planilha_preco_row in range(1, 1000):
@@ -162,7 +159,6 @@ def make_engenharia(se):
           complete_cells(se, planilha_preco_row, row, i, type="Engenharia")
           i += 1
   make_taxes(se=se, subtopico='ENGENHARIA', pis_confins=pis_confins_eq, icms=0, iss=iss_bh, ipi=ipi)
-
 
 def make_civil(se, se_names):
   print(f'{se.upper()} | Escrevendo a parte de Civil')
@@ -342,13 +338,12 @@ def make_total_sums():
 def make_se_sums(se):
   total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
   se_info = get_se_status(se)
-  
   first_row = se_info['first_row']
-  se_info = se_info['last_row']
+  last_row = se_info['last_row']
   
   for column in total_columns:
     formula = "=SUM("
-    for row in range(se_info['first_row'], se_info['last_row'] + 1):
+    for row in range(first_row, last_row + 1):
       cell = planilha_preco[f'{get_column_letter(column)}{row}']
       cell_color = cell.fill.start_color.rgb
       if cell_color == azul_escuro:
@@ -358,6 +353,28 @@ def make_se_sums(se):
     formula += ")"
     
     planilha_preco[f'{get_column_letter(column)}{first_row}'].value = formula
+
+def make_eletrica_sums(se):
+  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'B{row}'].value
+    if cell == 'ELÉTRICA':
+      eletrica_row = row
+    if cell == 'EQUIPAMENTOS DE PÁTIO':
+      equipamentos_row = row
+    if cell == 'CASA DE COMANDO':
+      casa_comando_row = row   
+
+  for column in total_columns:
+    column_letter = get_column_letter(column)
+    formula = f'=SUM({column_letter}{equipamentos_row}, {column_letter}{casa_comando_row})'
+    cell  = planilha_preco[f'{column_letter}{eletrica_row}']
+    cell.value = formula
+
 
 def make_resumo():
   total_row = get_total_row()
@@ -419,6 +436,7 @@ def build():
     make_montagem(se, se_names)
     make_servicos_gerais(se)
     make_se_sums(se)
+    make_eletrica_sums(se)
   make_total_sums()
   make_resumo()
    
