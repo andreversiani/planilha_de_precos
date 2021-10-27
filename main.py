@@ -405,6 +405,7 @@ def make_casa_comando_sums(se):
 def make_indices(se):
   make_dark_blue_indices(se)
   make_light_blue_indices(se)
+  make_purple_indices(se)
 
 def make_dark_blue_indices(se):
   se_info = get_se_status(se)
@@ -438,6 +439,27 @@ def make_light_blue_indices(se):
       cell_color = cell.fill.start_color.rgb
       if cell_color == azul_claro:
         formula = f'=A{eletrica_row} & ".{index}"'
+        cell.value = formula
+        index+= 1
+
+def make_purple_indices(se):
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  casa_comando_row = 0
+  index = 1
+
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'B{row}'].value
+    if cell == 'CASA DE COMANDO':
+      casa_comando_row = row   
+
+  if casa_comando_row:
+    for row in range(casa_comando_row, se_last_row + 1):
+      cell = planilha_preco[f'A{row}']
+      cell_color = cell.fill.start_color.rgb
+      if cell_color == roxo:
+        formula = f'=A{casa_comando_row} & ".{index}"'
         cell.value = formula
         index+= 1
 
