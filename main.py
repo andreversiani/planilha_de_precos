@@ -34,6 +34,7 @@ ipi = "$M$12"
 
 #cores
 azul_escuro = "FFC5D9F1"
+azul_claro = 'FFDAEEF3'
 laranja = "FFFDE9D9"
 branco = "FFFFFFFF"
 roxo = "FFE4DFEC"
@@ -401,6 +402,45 @@ def make_casa_comando_sums(se):
     
     planilha_preco[f'{get_column_letter(column)}{casa_comando_row}'].value = formula
 
+def make_indices(se):
+  make_dark_blue_indices(se)
+  make_light_blue_indices(se)
+
+def make_dark_blue_indices(se):
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  index = 1
+  
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'A{row}']
+    cell_color = cell.fill.start_color.rgb
+    if cell_color == azul_escuro:
+      formula = f'=A{se_first_row} & ".{index}"'
+      cell.value = formula
+      index += 1
+
+def make_light_blue_indices(se):
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  eletrica_row = 0
+  index = 1
+
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'B{row}'].value
+    if cell == 'ELÉTRICA':
+      eletrica_row = row   
+
+  if eletrica_row:
+    for row in range(eletrica_row, se_last_row + 1):
+      cell = planilha_preco[f'A{row}']
+      cell_color = cell.fill.start_color.rgb
+      if cell_color == azul_claro:
+        formula = f'=A{eletrica_row} & ".{index}"'
+        cell.value = formula
+        index+= 1
+
 def make_resumo():
   total_row = get_total_row()
   for row in range(8, total_row + 1):
@@ -463,6 +503,7 @@ def build():
     make_se_sums(se)
     make_eletrica_sums(se)
     make_casa_comando_sums(se)
+    make_indices(se)
   make_total_sums()
   make_resumo()
    
