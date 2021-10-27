@@ -3,9 +3,26 @@ from openpyxl.utils import get_column_letter
 from copy import copy
 import os
 
+def get_mc_name():
 
-planilha_preco_name = 'F4792-001-00 - PC - ANEXO 01 - Planilha de Preço.xlsx'
-mc_name = 'F4792-001-00 - MC - PIAUÍ NÍQUEL - Bay de Saída 230 kV.xlsm'
+  folder_path = os.getcwd()
+  folder_path_array = folder_path.split('\\')
+  
+  numero_proposta = folder_path_array[-1]
+  nome_proposta = folder_path_array[-3]
+  
+  nomes = nome_proposta.split(' ')
+  nomes.insert(2, "MC -")
+  nomes = nomes[1:]
+  nomes.insert(0, numero_proposta)
+  
+  nome_mc = ' '.join(nomes) + '.xlsm'
+
+  planilha_preco_name = f'{numero_proposta} - PC - ANEXO 01 - Planilha de Preço.xlsx'
+
+  return planilha_preco_name, nome_mc
+
+planilha_preco_name, mc_name = get_mc_name()
 
 wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
 wb_mc = load_workbook(mc_name, data_only=True)
@@ -112,7 +129,7 @@ def get_se_names():
   names_se = []
   for row in range(1, memo.max_row):
     value = memo[f'Z{row}'].internal_value
-    if value != None and value[0] == 'S' and value[1] == 'E' and value not in names_se:
+    if value != None and value[:2] == 'SE' and value not in names_se:
       names_se.append(value)
   return names_se
 
@@ -559,6 +576,7 @@ def build():
     make_indices(se)
   make_total_sums()
   make_resumo()
-   
+  
+    
 build()
 wb_planilha_preco.save('Nova.xlsx') 
