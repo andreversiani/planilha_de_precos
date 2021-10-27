@@ -63,7 +63,7 @@ def get_se_row(se):
     if planilha_preco[f'B{row}'].value == se:
       return row
 
-def complete_cells(planilha_preco_row, row, i):
+def complete_cells(planilha_preco_row, row, i, eletrocentro):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
   #Somas
   planilha_preco.cell(row=planilha_preco_row, column=16, value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
@@ -93,7 +93,13 @@ def complete_cells(planilha_preco_row, row, i):
   planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+{planilha_preco_row + i}/100)")
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
-  
+
+  if eletrocentro:
+    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=pis_confins_eq)
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=icms)
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
+    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
+
   #styles
   for column in range(1, planilha_preco.max_column + 1):
     cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
@@ -200,6 +206,7 @@ def make_civil(se, se_names):
 
 def make_montagem(se, se_names):
   print(f'{se.upper()} | Escrevendo a parte de Montagem')
+  eletrocentro = False
   se_count = 0
   for planilha_preco_row in range(1, 1000):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
@@ -208,12 +215,16 @@ def make_montagem(se, se_names):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'MONTAGEM' and se_count == se_names.index(se) + 1:
       i = 1
       for row in range(1, memo.max_row + 1):
-        if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais":
+        if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais" or memo[f'{conferencia_column}{row}'].value == "Eletrocentro":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            if memo[f'{subestacao_column}{row}'].value == "Eletrocentro":
+              complete_cells(planilha_preco_row, row, i, eletrocentro=True)
+            else:
+              complete_cells(planilha_preco_row, row, i)
             i += 1
   #impostos
   make_taxes(se=se, subtopico='MONTAGEM', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
+
 
 def make_servicos_gerais(se):
   print(f'{se.upper()} | Escrevendo a parte de Serviços Gerais')
