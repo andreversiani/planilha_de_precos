@@ -36,6 +36,7 @@ ipi = "$M$12"
 azul_escuro = "FFC5D9F1"
 laranja = "FFFDE9D9"
 branco = "FFFFFFFF"
+roxo = "FFE4DFEC"
 
 titles = ["ENGENHARIA", "ELÉTRICA", "CIVIL", "MONTAGEM", "SERVIÇOS GERAIS"]
 
@@ -375,6 +376,30 @@ def make_eletrica_sums(se):
     cell  = planilha_preco[f'{column_letter}{eletrica_row}']
     cell.value = formula
 
+def make_casa_comando_sums(se):
+  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  casa_comando_row = 0
+  
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'B{row}'].value
+    if cell == 'CASA DE COMANDO':
+      casa_comando_row = row   
+  
+  for column in total_columns:
+    formula = "=SUM("
+    for row in range(casa_comando_row, se_last_row + 1):
+      cell = planilha_preco[f'{get_column_letter(column)}{row}']
+      cell_color = cell.fill.start_color.rgb
+      if cell_color == roxo:
+        coordenada = cell.coordinate
+        formula += coordenada + ","
+    formula = formula[:-1]
+    formula += ")"
+    
+    planilha_preco[f'{get_column_letter(column)}{casa_comando_row}'].value = formula
 
 def make_resumo():
   total_row = get_total_row()
@@ -437,6 +462,7 @@ def build():
     make_servicos_gerais(se)
     make_se_sums(se)
     make_eletrica_sums(se)
+    make_casa_comando_sums(se)
   make_total_sums()
   make_resumo()
    
