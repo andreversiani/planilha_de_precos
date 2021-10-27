@@ -406,6 +406,7 @@ def make_indices(se):
   make_dark_blue_indices(se)
   make_light_blue_indices(se)
   make_purple_indices(se)
+  make_white_indices(se)
 
 def make_dark_blue_indices(se):
   se_info = get_se_status(se)
@@ -462,6 +463,35 @@ def make_purple_indices(se):
         formula = f'=A{casa_comando_row} & ".{index}"'
         cell.value = formula
         index+= 1
+
+def make_white_indices(se):
+  se_info = get_se_status(se)
+  se_first_row = se_info['first_row']
+  se_last_row = se_info['last_row']
+  fixed_cell = 0
+
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'A{row}']
+    cell_abaixo = planilha_preco[f'A{row + 1}']
+    cell_color = cell.fill.start_color.rgb
+    cell_abaixo_color = cell_abaixo.fill.start_color.rgb
+    
+    if cell_color != branco and cell_abaixo_color == branco:
+      fixed_cell = cell
+      formula = f'={fixed_cell.coordinate} & ".1"'
+      cell_abaixo.value = formula
+
+  for row in range(se_first_row, se_last_row + 1):
+    cell = planilha_preco[f'A{row}']
+    cell_acima = planilha_preco[f'A{row - 1}']
+    cell_color = cell.fill.start_color.rgb  
+    
+    if cell.value == None and cell_color == branco and cell_acima.value != None:
+      texto = cell_acima.value
+      index = int(texto[-2])
+      formula = texto[:-2]
+      formula += str(index + 1) + '"'
+      cell.value = formula
 
 def make_resumo():
   total_row = get_total_row()
