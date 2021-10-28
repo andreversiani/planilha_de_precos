@@ -42,12 +42,12 @@ preco_impostos_column = 'T'
 erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
 
 #impostos
-pis_confins_eq = '$M$14'
-pis_confins_sv = '$M$13'
-icms = '$M$22'
-iss_bh = '$M$15'
-iss_cliente = '$M$16'
-ipi = "$M$12"
+pis_confins_eq = '$C$48'
+pis_confins_sv = '$C$47'
+icms = '$L$33'
+iss_bh = '$C$49'
+iss_cliente = '$C$50'
+ipi = "$C$46"
 
 #cores
 azul_escuro = "FFC5D9F1"
@@ -621,16 +621,22 @@ def get_se_status(se):
   
   return se_status
 
+
 def make_se_names_header():
   se_names = get_se_names()
-  header = se_names[:-1]
-  header = (', ').join(header)
-  header += ' E ' + se_names[-1]
   cell = planilha_preco['A4']
-  cell.value = header
   title_cell = planilha_preco['A2']
   title_cell.value = planilha_preco_name[:-5]
-
+  
+  if len(se_names) == 1:
+    cell.value = str(se_names[0])
+  else:
+    header = se_names[:-1]
+    header = (', ').join(header)
+    header += ' E ' + se_names[-1]
+    cell.value = header
+    
+  
 def build():
   se_names = get_se_names()
   make_titles(se_names)
@@ -652,3 +658,4 @@ def build():
   wb_planilha_preco.save(planilha_preco_name)
 
 build()
+
