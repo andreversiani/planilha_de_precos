@@ -27,11 +27,17 @@ planilha_preco_name, mc_name = get_mc_name()
 wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
 wb_mc = load_workbook(mc_name, data_only=True)
 
-planilha_preco = wb_planilha_preco['Teste']
-resumo = wb_planilha_preco['Resumo_Teste']
-styles = wb_planilha_preco['Styles']
-memo = wb_mc['Memo Geral']
-db = wb_mc['DashBoard']
+planilha_preco_sheet_name = 'Planilha de Preço'
+planilha_resumo_sheet_name = 'Planilha Resumo'
+styles_sheet_name = 'Styles'
+memo_sheet_name = 'Memo Geral'
+db_sheet_name = 'DashBoard'
+
+planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
+resumo = wb_planilha_preco[planilha_resumo_sheet_name]
+styles = wb_planilha_preco[styles_sheet_name]
+memo = wb_mc[memo_sheet_name]
+db = wb_mc[db_sheet_name]
 
 #colunas
 conferencia_column = 'X'
@@ -534,10 +540,10 @@ def make_resumo():
       title_index = planilha_preco[f'A{row}'].value
 
       if get_column_letter(column) not in erase_columns:
-        cell.value = f'=Teste!{get_column_letter(column)}{row}'
+        cell.value = f'={planilha_preco_sheet_name}!{get_column_letter(column)}{row}'
 
       if title in titles or title_index in range(1, 101) or row == total_row:
-        cell.value = f'=Teste!{get_column_letter(column)}{row}'
+        cell.value = f'={planilha_preco_sheet_name}!{get_column_letter(column)}{row}'
 
   for row in range(8, total_row + 1):
     erase_cell = resumo[f'{qte_column}{row}']
@@ -551,8 +557,8 @@ def make_resumo():
       resumo.cell(row=row, column=13, value="")
 
   resumo.cell(row=total_row, column=2, value="")
-  resumo.cell(row=2, column=1, value=f'=Teste!A2')
-  resumo.cell(row=4, column=1, value=f'=Teste!A4')
+  resumo.cell(row=2, column=1, value=f'={planilha_preco_sheet_name}!A2')
+  resumo.cell(row=4, column=1, value=f'={planilha_preco_sheet_name}!A4')
 
 def make_sobressalentes():
   exit = True
@@ -649,6 +655,6 @@ def build():
   make_sobressalentes()
   make_total_sums()
   make_resumo()
-  wb_planilha_preco.save('Nova.xlsx')
+  wb_planilha_preco.save(planilha_preco_name)
 
 build()
