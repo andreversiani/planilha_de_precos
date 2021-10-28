@@ -4,22 +4,16 @@ from copy import copy
 import os
 
 def get_mc_name():
-
   folder_path = os.getcwd()
   folder_path_array = folder_path.split('\\')
-  
   numero_proposta = folder_path_array[-1]
   nome_proposta = folder_path_array[-3]
-  
   nomes = nome_proposta.split(' ')
   nomes.insert(2, "MC -")
   nomes = nomes[1:]
   nomes.insert(0, numero_proposta)
-  
   nome_mc = ' '.join(nomes) + '.xlsm'
-
   planilha_preco_name = f'{numero_proposta} - PC - ANEXO 01 - Planilha de Preço.xlsx'
-
   return planilha_preco_name, nome_mc
 
 planilha_preco_name, mc_name = get_mc_name()
@@ -540,10 +534,10 @@ def make_resumo():
       title_index = planilha_preco[f'A{row}'].value
 
       if get_column_letter(column) not in erase_columns:
-        cell.value = f'={planilha_preco_sheet_name}!{get_column_letter(column)}{row}'
+        cell.value = f"='{planilha_preco_sheet_name}'!{get_column_letter(column)}{row}"
 
       if title in titles or title_index in range(1, 101) or row == total_row:
-        cell.value = f'={planilha_preco_sheet_name}!{get_column_letter(column)}{row}'
+        cell.value = f"='{planilha_preco_sheet_name}'!{get_column_letter(column)}{row}"
 
   for row in range(8, total_row + 1):
     erase_cell = resumo[f'{qte_column}{row}']
@@ -557,8 +551,8 @@ def make_resumo():
       resumo.cell(row=row, column=13, value="")
 
   resumo.cell(row=total_row, column=2, value="")
-  resumo.cell(row=2, column=1, value=f'={planilha_preco_sheet_name}!A2')
-  resumo.cell(row=4, column=1, value=f'={planilha_preco_sheet_name}!A4')
+  resumo.cell(row=2, column=1, value=f"='{planilha_preco_sheet_name}'!A2")
+  resumo.cell(row=4, column=1, value=f"='{planilha_preco_sheet_name}'!A4")
 
 def make_sobressalentes():
   exit = True
