@@ -63,7 +63,7 @@ def get_se_row(se):
     if planilha_preco[f'B{row}'].value == se:
       return row
 
-def complete_cells(planilha_preco_row, row, i, eletrocentro):
+def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
   #Somas
   planilha_preco.cell(row=planilha_preco_row, column=16, value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
@@ -82,10 +82,18 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro):
   planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]Memo Geral'!{preco_impostos_column}${row}")
   
   #formulas fixadas nos campos brancos
-  planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"=$F${planilha_preco_row+1}")
-  planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"=$H${planilha_preco_row+1}")
-  planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"=$J${planilha_preco_row+1}")
-  planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
+  if not eletrocentro:
+    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"=$F${planilha_preco_row+1}")
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"=$H${planilha_preco_row+1}")
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"=$J${planilha_preco_row+1}")
+    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
+
+  if eletrocentro:
+    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins_eq}")
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100")
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
+    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
+  
   planilha_preco.cell(row=planilha_preco_row + i, column=5, value=f"=L{planilha_preco_row + i}-K{planilha_preco_row + i}-I{planilha_preco_row + i}-G{planilha_preco_row + i}")
   planilha_preco.cell(row=planilha_preco_row + i, column=7, value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=9, value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
@@ -94,11 +102,6 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro):
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
 
-  if eletrocentro:
-    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=pis_confins_eq)
-    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=icms)
-    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
-    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
 
   #styles
   for column in range(1, planilha_preco.max_column + 1):
@@ -206,7 +209,6 @@ def make_civil(se, se_names):
 
 def make_montagem(se, se_names):
   print(f'{se.upper()} | Escrevendo a parte de Montagem')
-  eletrocentro = False
   se_count = 0
   for planilha_preco_row in range(1, 1000):
     if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
@@ -217,7 +219,7 @@ def make_montagem(se, se_names):
       for row in range(1, memo.max_row + 1):
         if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais" or memo[f'{conferencia_column}{row}'].value == "Eletrocentro":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            if memo[f'{subestacao_column}{row}'].value == "Eletrocentro":
+            if memo[f'{conferencia_column}{row}'].value == "Eletrocentro":
               complete_cells(planilha_preco_row, row, i, eletrocentro=True)
             else:
               complete_cells(planilha_preco_row, row, i)
@@ -549,6 +551,8 @@ def make_resumo():
       resumo.cell(row=row, column=13, value="")
 
   resumo.cell(row=total_row, column=2, value="")
+  resumo.cell(row=2, column=1, value=f'=Teste!A2')
+  resumo.cell(row=4, column=1, value=f'=Teste!A4')
 
 def make_sobressalentes():
   exit = True
@@ -617,9 +621,20 @@ def get_se_status(se):
   
   return se_status
 
+def make_se_names_header():
+  se_names = get_se_names()
+  header = se_names[:-1]
+  header = (', ').join(header)
+  header += ' E ' + se_names[-1]
+  cell = planilha_preco['A4']
+  cell.value = header
+  title_cell = planilha_preco['A2']
+  title_cell.value = planilha_preco_name[:-5]
+
 def build():
   se_names = get_se_names()
   make_titles(se_names)
+  make_se_names_header()
   for se in se_names:
     make_engenharia(se)
     make_eletrica(se)
@@ -634,8 +649,6 @@ def build():
   make_sobressalentes()
   make_total_sums()
   make_resumo()
+  wb_planilha_preco.save('Nova.xlsx')
 
-
-    
 build()
-wb_planilha_preco.save('Nova.xlsx') 
