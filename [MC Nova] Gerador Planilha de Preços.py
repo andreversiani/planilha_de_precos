@@ -26,6 +26,7 @@ planilha_resumo_sheet_name = 'Planilha Resumo'
 styles_sheet_name = 'Styles'
 memo_sheet_name = 'Memo Geral'
 db_sheet_name = 'DashBoard'
+difal_sheet_name = 'Difal'
 
 planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
 resumo = wb_planilha_preco[planilha_resumo_sheet_name]
@@ -44,7 +45,7 @@ erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P']
 #impostos
 pis_confins_eq = '$C$48'
 pis_confins_sv = '$C$47'
-icms = '$L$33'
+icms = '$Q$3'
 iss_bh = '$C$49'
 iss_cliente = '$C$50'
 ipi = "$C$46"
@@ -76,10 +77,10 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row, column=5, value=f"=SUM(E{planilha_preco_row+1}:E{planilha_preco_row+i})")
       
   #Campos brancos
-  planilha_preco.cell(row=planilha_preco_row + i, column=2, value=f"='[{mc_name}]Memo Geral'!${descricao_column}${row}")
-  planilha_preco.cell(row=planilha_preco_row + i, column=3, value=f"='[{mc_name}]Memo Geral'!${qte_column}${row}")
+  planilha_preco.cell(row=planilha_preco_row + i, column=2, value=f"='[{mc_name}]{memo_sheet_name}'!${descricao_column}${row}")
+  planilha_preco.cell(row=planilha_preco_row + i, column=3, value=f"='[{mc_name}]{memo_sheet_name}'!${qte_column}${row}")
   planilha_preco.cell(row=planilha_preco_row + i, column=4, value="R$")
-  planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]Memo Geral'!{preco_impostos_column}${row}")
+  planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]{memo_sheet_name}'!{preco_impostos_column}${row}")
   
   #formulas fixadas nos campos brancos
   if not eletrocentro:
@@ -89,8 +90,8 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
     planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
 
   if eletrocentro:
-    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins_eq}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100")
+    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]{db_sheet_name}'!{pis_confins_eq}")
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]{difal_sheet_name}'!{icms} * 100")
     planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
     planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
   
@@ -123,14 +124,14 @@ def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, sobressalente_row = N
   if icms == 0:
     planilha_preco.cell(row=row, column=8, value=0) #icms
   else:
-    planilha_preco.cell(row=row, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100") #icms
+    planilha_preco.cell(row=row, column=8, value=f"='[{mc_name}]{difal_sheet_name}'!{icms} * 100") #icms
   if iss == 0:
     planilha_preco.cell(row=row, column=10, value=0) #iss
   else:
-    planilha_preco.cell(row=row, column=10, value=f"='[{mc_name}]DashBoard'!{iss}") #iss
+    planilha_preco.cell(row=row, column=10, value=f"='[{mc_name}]{db_sheet_name}'!{iss}") #iss
     
-  planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins}") #pis/confins 
-  planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]DashBoard'!{ipi}") #ipi
+  planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]{db_sheet_name}'!{pis_confins}") #pis/confins 
+  planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]{db_sheet_name}'!{ipi}") #ipi
 
 
 def get_se_names():
@@ -621,7 +622,6 @@ def get_se_status(se):
   
   return se_status
 
-
 def make_se_names_header():
   se_names = get_se_names()
   cell = planilha_preco['A4']
@@ -636,7 +636,6 @@ def make_se_names_header():
     header += ' E ' + se_names[-1]
     cell.value = header
     
-  
 def build():
   se_names = get_se_names()
   make_titles(se_names)
@@ -658,4 +657,3 @@ def build():
   wb_planilha_preco.save(planilha_preco_name)
 
 build()
-
