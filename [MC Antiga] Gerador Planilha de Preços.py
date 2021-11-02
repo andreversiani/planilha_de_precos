@@ -16,22 +16,13 @@ def get_mc_name():
   planilha_preco_name = f'{numero_proposta} - PC - ANEXO 01 - Planilha de Preço.xlsx'
   return planilha_preco_name, nome_mc
 
-planilha_preco_name, mc_name = get_mc_name()
-
-wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
-wb_mc = load_workbook(mc_name, data_only=True)
-
+#sheet names
 planilha_preco_sheet_name = 'Planilha de Preço'
 planilha_resumo_sheet_name = 'Planilha Resumo'
+boilerplate_sheet_name = 'Boilerplate'
 styles_sheet_name = 'Styles'
 memo_sheet_name = 'Memo Geral'
 db_sheet_name = 'DashBoard'
-
-planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
-resumo = wb_planilha_preco[planilha_resumo_sheet_name]
-styles = wb_planilha_preco[styles_sheet_name]
-memo = wb_mc[memo_sheet_name]
-db = wb_mc[db_sheet_name]
 
 #colunas
 conferencia_column = 'X'
@@ -42,12 +33,12 @@ preco_impostos_column = 'T'
 erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
 
 #impostos
-pis_confins_eq = '$M$14'
-pis_confins_sv = '$M$13'
-icms = '$M$22'
-iss_bh = '$M$15'
-iss_cliente = '$M$16'
-ipi = "$M$12"
+pis_confins_eq = '$C$48'
+pis_confins_sv = '$C$47'
+icms = '$Q$3'
+iss_bh = '$C$49'
+iss_cliente = '$C$50'
+ipi = "$C$46"
 
 #cores
 azul_escuro = "FFC5D9F1"
@@ -57,6 +48,21 @@ branco = "FFFFFFFF"
 roxo = "FFE4DFEC"
 
 titles = ["ENGENHARIA", "ELÉTRICA", "CIVIL", "MONTAGEM", "SERVIÇOS GERAIS"]
+
+try:
+  planilha_preco_name, mc_name = get_mc_name()
+  wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
+  wb_mc = load_workbook(mc_name, data_only=True)
+  planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
+  resumo = wb_planilha_preco[planilha_resumo_sheet_name]
+  styles = wb_planilha_preco[styles_sheet_name]
+  #boilerplate = wb_planilha_preco[boilerplate_sheet_name]
+  memo = wb_mc[memo_sheet_name]
+  db = wb_mc[db_sheet_name]
+
+except Exception as error:
+  print(str(error))
+  exit()
 
 def get_se_row(se):
   for row in range(1, planilha_preco.max_row):
@@ -101,7 +107,6 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+{planilha_preco_row + i}/100)")
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
-
 
   #styles
   for column in range(1, planilha_preco.max_column + 1):
@@ -349,8 +354,11 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
   make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
 def make_eletrica(se):
-  make_equipamentos(se)
-  make_casa(se)
+  se_status = get_se_status(se)
+  if se_status['equipamentos']:
+    make_equipamentos(se)
+  if se_status['casa_comando']:
+    make_casa(se)
 
 def make_total_sums():
   total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
@@ -391,6 +399,9 @@ def make_eletrica_sums(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
+  formula = False
+  
+  print(f'Equipamentos -> {se_info["equipamentos"]}, Casa_Comando = {se_info["casa_comando"]}')
   
   for row in range(se_first_row, se_last_row + 1):
     cell = planilha_preco[f'B{row}'].value
@@ -399,11 +410,24 @@ def make_eletrica_sums(se):
     if cell == 'EQUIPAMENTOS DE PÁTIO':
       equipamentos_row = row
     if cell == 'CASA DE COMANDO':
-      casa_comando_row = row   
+      casa_comando_row = row
+      print(casa_comando_row)  
 
   for column in total_columns:
     column_letter = get_column_letter(column)
-    formula = f'=SUM({column_letter}{equipamentos_row}, {column_letter}{casa_comando_row})'
+    
+    if se_info['equipamentos'] and se_info['casa_comando']:
+      formula = f'=SUM({column_letter}{equipamentos_row},{column_letter}{casa_comando_row})'
+    
+    if se_info['equipamentos'] and not se_info['casa_comando']:
+      formula = f'=SUM({column_letter}{equipamentos_row})'
+    
+    if not se_info['equipamentos'] and se_info['casa_comando']:
+      formula = f'=SUM({column_letter}{casa_comando_row})'
+    
+    if not formula:
+      formula  = 0
+
     cell  = planilha_preco[f'{column_letter}{eletrica_row}']
     cell.value = formula
 
@@ -604,8 +628,11 @@ def get_se_status(se):
   se_status = {
     "name": se,
     "first_row": 0,
-    "last_row": 0
+    "last_row": 0,
+    "casa_comando": False,
+    "equipamentos": False
   }
+  
   total_row = get_total_row()
   for row in range(8, total_row):
     title = planilha_preco[f'B{row}'].value
@@ -618,7 +645,23 @@ def get_se_status(se):
 
     if row == total_row - 1 and se_status['last_row'] == 0:
       se_status["last_row"] = total_row - 1
+
+  for memo_row in range(1, memo.max_row):
+
+    cell = memo[f'{conferencia_column}{memo_row}']
+    qte_cell  = memo[f'{qte_column}{memo_row}']
+    se_name_cell = memo[f'{subestacao_column}{memo_row}']
+    descricao_cell = memo[f'{descricao_column}{memo_row}']
+
+    if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
+        if qte_cell.value > 0 and se_name_cell.value == se:
+          se_status['casa_comando'] = True
+          
   
+    if cell.value == "Demais equipamentos de pátio" or cell.value == "Transformador de Força" or cell.value == "GIS / Módulo Híbrido":
+      if qte_cell.value > 0 and se_name_cell.value == se:
+        se_status['equipamentos'] = True
+
   return se_status
 
 def make_se_names_header():
@@ -634,6 +677,13 @@ def make_se_names_header():
     header = (', ').join(header)
     header += ' E ' + se_names[-1]
     cell.value = header
+
+def make_sums(se):
+  se_status = get_se_status(se)
+  make_se_sums(se)
+  make_eletrica_sums(se)
+  if se_status['casa_comando']:
+    make_casa_comando_sums(se)
     
 def build():
   se_names = get_se_names()
@@ -645,14 +695,16 @@ def build():
     make_civil(se, se_names)
     make_montagem(se, se_names)
     make_servicos_gerais(se)
-    make_se_sums(se)
-    make_eletrica_sums(se)
-    make_casa_comando_sums(se)
+    make_sums(se)
     make_indices(se)
   
   make_sobressalentes()
   make_total_sums()
   make_resumo()
-  wb_planilha_preco.save(planilha_preco_name)
+  
+  try:
+    wb_planilha_preco.save('Teste.xlsx')
+  except Exception as error:
+    print("Feche a MC antes de rodar o Gerador de Planilha de Preços")
 
 build()
