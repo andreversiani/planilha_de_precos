@@ -33,12 +33,12 @@ preco_impostos_column = 'T'
 erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
 
 #impostos
-pis_confins_eq = '$M$14'
-pis_confins_sv = '$M$13'
-icms = '$M$22'
-iss_bh = '$M$15'
-iss_cliente = '$M$16'
-ipi = "$M$12"
+pis_confins_eq = '$C$48'
+pis_confins_sv = '$C$47'
+icms = '$Q$3'
+iss_bh = '$C$49'
+iss_cliente = '$C$50'
+ipi = "$C$46"
 
 #cores
 azul_escuro = "FFC5D9F1"

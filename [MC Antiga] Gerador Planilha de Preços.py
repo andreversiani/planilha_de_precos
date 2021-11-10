@@ -33,12 +33,12 @@ preco_impostos_column = 'T'
 erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
 
 #impostos
-pis_confins_eq = '$C$48'
-pis_confins_sv = '$C$47'
-icms = '$Q$3'
-iss_bh = '$C$49'
-iss_cliente = '$C$50'
-ipi = "$C$46"
+pis_confins_eq = '$M$14'
+pis_confins_sv = '$M$13'
+icms = '$M$22'
+iss_bh = '$M$15'
+iss_cliente = '$M$16'
+ipi = "$M$12"
 
 #cores
 azul_escuro = "FFC5D9F1"
@@ -104,7 +104,7 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=7, value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=9, value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=11, value=f"=L{planilha_preco_row + i}*J{planilha_preco_row + i}/100")
-  planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+{planilha_preco_row + i}/100)")
+  planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+M{planilha_preco_row + i}/100)")
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
 
@@ -601,11 +601,11 @@ def make_sobressalentes():
     planilha_preco.cell(row=sobressalente_row, column=1, value=indice)
 
   #LINHAS EM BRANCO
-  i = 0
+  i = 1
   for memo_row in range(1, memo.max_column):
     conferencia_cell = memo[f'{conferencia_column}{memo_row}']
     if conferencia_cell.value == "Sobressalentes":
-      complete_cells(sobressalente_row + 1, memo_row, i)
+      complete_cells(sobressalente_row, memo_row, i)
       i += 1
   make_taxes(se='Sobressalentes', subtopico='SOBRESSALENTES', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi, sobressalente_row=sobressalente_row+1)
 
