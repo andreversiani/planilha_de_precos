@@ -4,17 +4,15 @@ from copy import copy
 import os
 
 def get_mc_name():
-  folder_path = os.getcwd()
-  folder_path_array = folder_path.split('\\')
-  numero_proposta = folder_path_array[-1]
-  nome_proposta = folder_path_array[-3]
-  nomes = nome_proposta.split(' ')
-  nomes.insert(2, "MC -")
-  nomes = nomes[1:]
-  nomes.insert(0, numero_proposta)
-  nome_mc = ' '.join(nomes) + '.xlsm'
-  planilha_preco_name = f'{numero_proposta} - PC - ANEXO 01 - Planilha de Preço.xlsx'
-  return planilha_preco_name, nome_mc
+  files = os.listdir()
+  for file in files:
+    if '- MC -' in file:
+      mc_name = file
+    
+    if 'Planilha de Preço' in file and '- PC - ' in file:
+      planilha_preco_name = file
+
+  return planilha_preco_name, mc_name
 
 #sheet names
 planilha_preco_sheet_name = 'Planilha de Preço'
@@ -399,9 +397,7 @@ def make_eletrica_sums(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
-  formula = False
-  
-  print(f'Equipamentos -> {se_info["equipamentos"]}, Casa_Comando = {se_info["casa_comando"]}')
+  formula = False 
   
   for row in range(se_first_row, se_last_row + 1):
     cell = planilha_preco[f'B{row}'].value
@@ -411,7 +407,6 @@ def make_eletrica_sums(se):
       equipamentos_row = row
     if cell == 'CASA DE COMANDO':
       casa_comando_row = row
-      print(casa_comando_row)  
 
   for column in total_columns:
     column_letter = get_column_letter(column)
@@ -637,7 +632,7 @@ def get_se_status(se):
   for row in range(8, total_row):
     title = planilha_preco[f'B{row}'].value
     
-    if title[:3] == "SE " and se_status["first_row"] > 0:
+    if title[:3] == "SE " and se_status["first_row"] > 0 and se_status["last_row"] == 0:
       se_status["last_row"] = row - 1
 
     if title == se:
