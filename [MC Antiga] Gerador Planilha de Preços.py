@@ -92,6 +92,18 @@ TAXES = {
     'icms': 0,
     'iss': iss_bh,
     'ipi': ipi
+  },
+  'FDSV': {
+    'pis_cofins': pis_cofins_sv,
+    'icms': 0,
+    'iss': iss_bh,
+    'ipi': ipi
+  },
+  'FDEQ': {
+    'pis_cofins': pis_cofins_eq,
+    'icms': icms,
+    'iss': 0,
+    'ipi': ipi,
   }
 }
 
