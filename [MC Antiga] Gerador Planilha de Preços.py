@@ -101,17 +101,18 @@ try:
   wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
   wb_mc = load_workbook(mc_name, data_only=True)
 
+  decoy_sheet = wb_planilha_preco.create_sheet("Sheet1")
+
   planilha_preco_sheet_names = wb_planilha_preco.sheetnames
   planilha_preco_base = wb_planilha_preco[planilha_preco_base_sheet_name]
   
-  planilha_preco = wb_planilha_preco.copy_worksheet(planilha_preco_base)
-
   if planilha_preco_sheet_name in planilha_preco_sheet_names:
-    wb_planilha_preco.remove(wb_planilha_preco.worksheets[planilha_preco_sheet_names.index(planilha_preco_sheet_name)])
+    wb_planilha_preco.remove(wb_planilha_preco[planilha_preco_sheet_name])
 
-  if planilha_resumo_sheet_name in planilha_preco_sheet_names:
-    wb_planilha_preco.remove(wb_planilha_preco.worksheets[planilha_preco_sheet_names.index(planilha_resumo_sheet_name)])
+  if planilha_resumo_sheet_name in wb_planilha_preco.sheetnames:
+    wb_planilha_preco.remove(wb_planilha_preco[planilha_resumo_sheet_name])
 
+  planilha_preco = wb_planilha_preco.copy_worksheet(planilha_preco_base)
   planilha_preco.title = 'Planilha de Preço'
   planilha_preco.sheet_view.showGridLines = False
   
@@ -122,6 +123,13 @@ try:
   styles = wb_planilha_preco[styles_sheet_name]
   memo = wb_mc[memo_sheet_name]
   db = wb_mc[db_sheet_name]
+  
+  ws = wb_planilha_preco.worksheets
+  ws_titles = [sheet.title for sheet in ws]
+  
+  for sheet in wb_planilha_preco.worksheets:
+    if sheet.title not in ['Planilha de Preço', 'Planilha Resumo', 'Styles', 'Base Planilha de Preço']:
+      wb_planilha_preco.remove(sheet)
 
 except Exception as error:
   print(str(error))
