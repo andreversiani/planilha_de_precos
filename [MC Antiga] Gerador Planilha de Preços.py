@@ -14,6 +14,25 @@ def get_mc_name():
 
   return planilha_preco_name, mc_name
 
+
+TITLES = {
+  'ENGENHARIA': {
+  'white_list': ['Projetos']
+  },
+
+  'CIVIL': {
+    'white_list': ['Obras Civis', 'Canteiro / Mobilização']
+  },
+
+  'MONTAGEM': {
+    'white_list': ['Montagem Eletromecânica', 'Materiais', 'Eletrocentro']
+  },
+
+  'SERVIÇOS GERAIS': {
+    'white_list': ['Treinamento', 'Comissionamento', 'Supervisão de Montagem', 'Administração de Obra', 'Frete', 'Despesas de Viagem']
+  }
+}
+
 #sheet names
 planilha_preco_sheet_name = 'Planilha de Preço'
 planilha_resumo_sheet_name = 'Planilha Resumo'
@@ -32,8 +51,8 @@ erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P']
 type_column = 'L'
 
 #impostos
-pis_confins_eq = '$M$14'
-pis_confins_sv = '$M$13'
+pis_cofins_eq = '$M$14'
+pis_cofins_sv = '$M$13'
 icms = '$M$22'
 iss_bh = '$M$15'
 iss_cliente = '$M$16'
@@ -48,6 +67,61 @@ roxo = "FFE4DFEC"
 
 titles = ["ENGENHARIA", "ELÉTRICA", "CIVIL", "MONTAGEM", "SERVIÇOS GERAIS"]
 
+TAXES = {
+  'PR': {
+    'pis_cofins': pis_cofins_eq,
+    'icms': 0,
+    'iss': iss_bh,
+    'ipi': ipi,
+  },
+  'EQ': {
+    'pis_cofins': pis_cofins_eq,
+    'icms': icms,
+    'iss': 0,
+    'ipi': ipi,
+  },
+  'SV': {
+    'pis_cofins': pis_cofins_sv,
+    'icms': 0,
+    'iss': iss_bh,
+    'ipi': ipi
+  },
+  'SO': {
+    'pis_cofins': pis_cofins_sv,
+    'icms': 0,
+    'iss': iss_bh,
+    'ipi': ipi
+  }
+}
+
+def qtd_validador(row, se):
+  if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
+    return True
+  else: 
+    return False
+
+def make_item(se, white_list, type):
+  i = 0
+  se_count = 0
+  se_names = get_se_names()
+
+  print(f'{se.upper()} | Escrevendo a parte de {type}')
+  
+  for planilha_preco_row in range(8, 1000):
+    title = planilha_preco[f'B{planilha_preco_row}'].value
+    if title in se_names:
+      se_count += 1
+    index = se_names.index(se) + 1 
+
+    if title == type and se_count == index:
+      for memo_row in range(1, memo.max_row + 1):
+        conferencia_value = memo[f'{conferencia_column}{memo_row}'].value
+        if conferencia_value in white_list and qtd_validador(memo_row, se):
+          taxes_type = memo[f'{type_column}{memo_row}'].value
+          i += 1
+          taxes = TAXES[taxes_type]
+          complete_cells(planilha_preco_row, memo_row, i, taxes)
+
 try:
   planilha_preco_name, mc_name = get_mc_name()
   wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
@@ -55,7 +129,6 @@ try:
   planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
   resumo = wb_planilha_preco[planilha_resumo_sheet_name]
   styles = wb_planilha_preco[styles_sheet_name]
-  #boilerplate = wb_planilha_preco[boilerplate_sheet_name]
   memo = wb_mc[memo_sheet_name]
   db = wb_mc[db_sheet_name]
 
@@ -68,8 +141,9 @@ def get_se_row(se):
     if planilha_preco[f'B{row}'].value == se:
       return row
 
-def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
+def complete_cells(planilha_preco_row, row, i, taxes):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
+  #print(planilha_preco_row)
   #Somas
   planilha_preco.cell(row=planilha_preco_row, column=16, value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
   planilha_preco.cell(row=planilha_preco_row, column=15, value=f"=SUM(O{planilha_preco_row+1}:O{planilha_preco_row+i})")
@@ -85,20 +159,6 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=3, value=f"='[{mc_name}]Memo Geral'!${qte_column}${row}")
   planilha_preco.cell(row=planilha_preco_row + i, column=4, value="R$")
   planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]Memo Geral'!{preco_impostos_column}${row}")
-  
-  #formulas fixadas nos campos brancos
-  if not eletrocentro:
-    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"=$F${planilha_preco_row+1}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"=$H${planilha_preco_row+1}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"=$J${planilha_preco_row+1}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
-
-  if eletrocentro:
-    planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins_eq}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100")
-    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
-    planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
-  
   planilha_preco.cell(row=planilha_preco_row + i, column=5, value=f"=L{planilha_preco_row + i}-K{planilha_preco_row + i}-I{planilha_preco_row + i}-G{planilha_preco_row + i}")
   planilha_preco.cell(row=planilha_preco_row + i, column=7, value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=9, value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
@@ -106,36 +166,29 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+M{planilha_preco_row + i}/100)")
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
+  
+  #Impostos
+  _icms = taxes['icms']
+  _pis_cofins = taxes['pis_cofins']
+  _iss = taxes['iss']
+  _ipi = taxes['ipi']
 
+  if _icms == 0:
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=0) #icms
+  else:
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{_icms} * 100") #icms
+  if _iss == 0:
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0) #iss
+  else:
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"='[{mc_name}]DashBoard'!{_iss}") #iss
+    
+  planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{_pis_cofins}") #pis/confins 
+  planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"='[{mc_name}]DashBoard'!{_ipi}") #ipi
+  
   #styles
   for column in range(1, planilha_preco.max_column + 1):
     cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
     cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
-
-def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, title_row = None):
-  
-  if not title_row:
-    row = 1
-    while planilha_preco[f'B{row}'].value != se:
-      row += 1
-    while planilha_preco[f'B{row}'].value != subtopico:
-      row += 1
-    row += 1
-  
-  if title_row:
-    row = title_row
-
-  if icms == 0:
-    planilha_preco.cell(row=row, column=8, value=0) #icms
-  else:
-    planilha_preco.cell(row=row, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100") #icms
-  if iss == 0:
-    planilha_preco.cell(row=row, column=10, value=0) #iss
-  else:
-    planilha_preco.cell(row=row, column=10, value=f"='[{mc_name}]DashBoard'!{iss}") #iss
-    
-  planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]DashBoard'!{pis_confins}") #pis/confins 
-  planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]DashBoard'!{ipi}") #ipi
 
 
 def get_se_names():
@@ -192,76 +245,6 @@ def make_titles(names_se):
           if row == total_row and column == 1:
             planilha_preco.cell(row=row, column=column, value=int(names_se.index(se) + 1)) #preenche o primeiro item
         
-def make_engenharia(se):
-  print(f'{se.upper()} | Escrevendo a parte de Engenharia')
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA' and planilha_preco[f'B{planilha_preco_row-1}'].value == se:
-      #se = str(planilha_preco[f'B{planilha_preco_row - 1}'].value)
-      i = 1
-      for row in range(1, memo.max_row + 1):
-        if memo[f'{conferencia_column}{row}'].value == "Projetos" and memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-          complete_cells(planilha_preco_row, row, i)
-          i += 1
-  make_taxes(se=se, subtopico='ENGENHARIA', pis_confins=pis_confins_eq, icms=0, iss=iss_bh, ipi=ipi)
-
-def make_civil(se, se_names):
-  print(f'{se.upper()} | Escrevendo a parte de Civil')
-  se_count=  0
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
-      se_count += 1
-    
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'CIVIL'and se_count == se_names.index(se) + 1:
-      #se = str(planilha_preco[engenharia_cell.coordinate].value)
-      i = 1
-      for row in range(1, memo.max_row + 1):
-        if memo[f'{conferencia_column}{row}'].value == "Obras Civis" or memo[f'{conferencia_column}{row}'].value == "Canteiro / Mobilização":
-          if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
-            i += 1
-  #impostos
-  make_taxes(se=se, subtopico='CIVIL', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
-
-
-def make_montagem(se, se_names):
-  print(f'{se.upper()} | Escrevendo a parte de Montagem')
-  se_count = 0
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
-      se_count += 1
-
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'MONTAGEM' and se_count == se_names.index(se) + 1:
-      i = 1
-      for row in range(1, memo.max_row + 1):
-        if memo[f'{conferencia_column}{row}'].value == "Montagem Eletromecânica" or memo[f'{conferencia_column}{row}'].value == "Materiais" or memo[f'{conferencia_column}{row}'].value == "Eletrocentro":
-          if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            if memo[f'{conferencia_column}{row}'].value == "Eletrocentro":
-              complete_cells(planilha_preco_row, row, i, eletrocentro=True)
-            else:
-              complete_cells(planilha_preco_row, row, i)
-            i += 1
-  #impostos
-  make_taxes(se=se, subtopico='MONTAGEM', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
-
-
-def make_servicos_gerais(se):
-  print(f'{se.upper()} | Escrevendo a parte de Serviços Gerais')
-  se_names = get_se_names()
-  se_count = 0
-  for planilha_preco_row in range(1, 1000):
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'ENGENHARIA':
-      se_count += 1
-
-    if planilha_preco[f'B{planilha_preco_row}'].value == 'SERVIÇOS GERAIS' and se_count == se_names.index(se) + 1:
-      i = 1
-      for row in range(1, memo.max_row + 1):
-        if memo[f'{conferencia_column}{row}'].value == "Treinamento" or memo[f'{conferencia_column}{row}'].value == "Comissionamento" or memo[f'{conferencia_column}{row}'].value == "Supervisão de Montagem" or memo[f'{conferencia_column}{row}'].value == "Administração de Obra" or memo[f'{conferencia_column}{row}'].value == "Frete" or memo[f'{conferencia_column}{row}'].value == "Despesas de Viagem":
-          if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
-            i += 1
-
-  make_taxes(se=se, subtopico='SERVIÇOS GERAIS', pis_confins=pis_confins_sv, icms=0, iss=iss_cliente, ipi=ipi)
-
 
 def make_equipamentos(se):
   exit = True
@@ -294,13 +277,13 @@ def make_equipamentos(se):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == "Demais equipamentos de pátio" or cell.value == "GIS / Módulo Híbrido" or cell.value == "Transformador de Força":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row + 1, row, i)
+            taxes_type = memo[f'{type_column}{row}'].value
+            taxes = TAXES[taxes_type]
+            complete_cells(planilha_preco_row + 1, row, i, taxes)
             i += 1
-  
-  make_taxes(se=se, subtopico='EQUIPAMENTOS DE PÁTIO', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
 def make_casa(se):
-  exit = True
+  exit = True 
   for memo_row in range(1, memo.max_row + 1):
     cell = memo[f'{conferencia_column}{memo_row}']
     if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
@@ -359,10 +342,10 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == memo_value:
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
+            taxes_type = memo[f'{type_column}{row}'].value
+            taxes = TAXES[taxes_type]
+            complete_cells(planilha_preco_row, row, i, taxes)
             i += 1
-  
-  make_taxes(se=se, subtopico=planilha_precos_title, pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi)
 
 def make_eletrica(se):
   se_status = get_se_status(se)
@@ -587,37 +570,6 @@ def make_resumo():
   resumo.cell(row=4, column=1, value=f"='{planilha_preco_sheet_name}'!A4")
 
 def make_other_titles():
-  
-  taxes = {
-    
-    'PR': {
-      'pis_confins': pis_confins_eq,
-      'icms': 0,
-      'iss': iss_bh,
-      'ipi': ipi,
-    },
-    
-    'EQ': {
-      'pis_confins': pis_confins_eq,
-      'icms': icms,
-      'iss': 0,
-      'ipi': ipi,
-    },
-
-    'SV': {
-      'pis_confins': pis_confins_sv,
-      'icms': 0,
-      'iss': iss_bh,
-      'ipi': ipi
-    },
-
-    'SO': {
-      'pis_confins': pis_confins_sv,
-      'icms': 0,
-      'iss': iss_bh,
-      'ipi': ipi
-    }
-  }
 
   titles = get_other_titles_names()
 
@@ -645,13 +597,8 @@ def make_other_titles():
   
       if conferencia_cell.value == title and qte_cell.value != None and qte_cell.value > 0:
         taxes_type = memo[f'{type_column}{memo_row}'].value
-        complete_cells(title_row, memo_row, i)
-        pis_confins = taxes[taxes_type]['pis_confins']
-        print(pis_confins)
-        _icms = taxes[taxes_type]['icms']
-        iss = taxes[taxes_type]['iss']
-        _ipi = taxes[taxes_type]['ipi']
-        make_taxes(se=title, subtopico=title, pis_confins=pis_confins, icms=_icms, iss=iss, ipi=_ipi, title_row=title_row + i)
+        taxes = TAXES[taxes_type]
+        complete_cells(title_row, memo_row, i, taxes)
         i += 1
     #SOMAS
   
@@ -728,17 +675,34 @@ def make_sums(se):
   make_eletrica_sums(se)
   if se_status['casa_comando']:
     make_casa_comando_sums(se)
-    
+
+ENGENHARIA = {
+  'white_list': ['Projetos']
+}
+
+CIVIL = {
+  'white_list': ['Obras Civis', 'Canteiro / Mobilização']
+}
+
+MONTAGEM = {
+  'white_list': ['Montagem Eletromecânica', 'Materiais', 'Eletrocentro']
+}
+
+MONTAGEM = {
+  'white_list': ['Treinamento', 'Comissionamento', 'Supervisão de Montagem', 'Administração de Obra', 'Frete', 'Despesas de Viagem']
+}
+
+
 def build():
   se_names = get_se_names()
   make_titles(se_names)
   make_se_names_header()
   for se in se_names:
-    make_engenharia(se)
+    make_item(se, TITLES['ENGENHARIA']['white_list'], list(TITLES)[0])
     make_eletrica(se)
-    make_civil(se, se_names)
-    make_montagem(se, se_names)
-    make_servicos_gerais(se)
+    make_item(se, TITLES['CIVIL']['white_list'], list(TITLES)[1])
+    make_item(se, TITLES['MONTAGEM']['white_list'], list(TITLES)[2])
+    make_item(se, TITLES['SERVIÇOS GERAIS']['white_list'], list(TITLES)[3])
     make_sums(se)
     make_indice_inicials(se)
   
