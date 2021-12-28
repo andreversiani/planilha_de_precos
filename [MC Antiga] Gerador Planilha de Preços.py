@@ -28,7 +28,8 @@ descricao_column = 'B'
 subestacao_column = 'Z'
 qte_column = 'D'
 preco_impostos_column = 'T'
-erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P'] 
+erase_columns = ['E', 'G', 'I', 'K', 'L', 'N', 'O', 'P']
+type_column = 'L'
 
 #impostos
 pis_confins_eq = '$M$14'
@@ -111,8 +112,9 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
     cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
     cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
 
-def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, sobressalente_row = None):
-  if subtopico != "SOBRESSALENTES":
+def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, title_row = None):
+  
+  if not title_row:
     row = 1
     while planilha_preco[f'B{row}'].value != se:
       row += 1
@@ -120,8 +122,8 @@ def make_taxes(se, subtopico, pis_confins, icms, iss, ipi, sobressalente_row = N
       row += 1
     row += 1
   
-  if subtopico == "SOBRESSALENTES":
-    row = sobressalente_row
+  if title_row:
+    row = title_row
 
   if icms == 0:
     planilha_preco.cell(row=row, column=8, value=0) #icms
@@ -143,6 +145,17 @@ def get_se_names():
     if value != None and value[:2] == 'SE' and value not in names_se:
       names_se.append(value)
   return names_se
+
+def get_other_titles_names():
+  titles = []
+  ignore = ['TOTAL/TITULO/VAZIO', 'Subestação / LT']
+  for row in range(1, memo.max_row):
+    value = memo[f'Z{row}'].internal_value
+    if value != None and value[:2] != 'SE' and value not in titles and value not in ignore:
+      num = memo[f'D{row}'].internal_value
+      if num != None and int(num) > 0:
+        titles.append(value)
+  return titles
 
 def get_total_row():
   for row in range(1, planilha_preco.max_row + 1):
@@ -451,13 +464,13 @@ def make_casa_comando_sums(se):
     
     planilha_preco[f'{get_column_letter(column)}{casa_comando_row}'].value = formula
 
-def make_indices(se):
-  make_dark_blue_indices(se)
-  make_light_blue_indices(se)
-  make_purple_indices(se)
-  make_white_indices(se)
+def make_indice_inicials(se):
+  make_dark_blue_indice_inicials(se)
+  make_light_blue_indice_inicials(se)
+  make_purple_indice_inicials(se)
+  make_white_indice_inicials(se)
 
-def make_dark_blue_indices(se):
+def make_dark_blue_indice_inicials(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
@@ -471,7 +484,7 @@ def make_dark_blue_indices(se):
       cell.value = formula
       index += 1
 
-def make_light_blue_indices(se):
+def make_light_blue_indice_inicials(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
@@ -492,7 +505,7 @@ def make_light_blue_indices(se):
         cell.value = formula
         index+= 1
 
-def make_purple_indices(se):
+def make_purple_indice_inicials(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
@@ -513,7 +526,7 @@ def make_purple_indices(se):
         cell.value = formula
         index+= 1
 
-def make_white_indices(se):
+def make_white_indice_inicials(se):
   se_info = get_se_status(se)
   se_first_row = se_info['first_row']
   se_last_row = se_info['last_row']
@@ -573,51 +586,88 @@ def make_resumo():
   resumo.cell(row=2, column=1, value=f"='{planilha_preco_sheet_name}'!A2")
   resumo.cell(row=4, column=1, value=f"='{planilha_preco_sheet_name}'!A4")
 
-def make_sobressalentes():
-  exit = True
-  for memo_row in range(1, memo.max_row + 1):
-    cell = memo[f'{conferencia_column}{memo_row}']
-    if cell.value == "Sobressalentes" and int(memo[f'{qte_column}{memo_row}'].value):
-        exit = False
-  if exit:
-    return 0
+def make_other_titles():
   
-  indice = len(get_se_names()) + 1
-  total_row = get_total_row()
-  planilha_preco.insert_rows(total_row, 1)
-  sobressalente_row = total_row
+  taxes = {
+    
+    'PR': {
+      'pis_confins': pis_confins_eq,
+      'icms': 0,
+      'iss': iss_bh,
+      'ipi': ipi,
+    },
+    
+    'EQ': {
+      'pis_confins': pis_confins_eq,
+      'icms': icms,
+      'iss': 0,
+      'ipi': ipi,
+    },
 
-  #TÍTULO
-  for planilha_preco_column in range(1, planilha_preco.max_column + 1):
-    copy_cell = styles[f'{get_column_letter(planilha_preco_column)}1']
-    new_cell = planilha_preco.cell(row=sobressalente_row, column=planilha_preco_column, value=None)
-    new_cell._style = copy(copy_cell._style)
-    planilha_preco.cell(row=sobressalente_row, column=2, value='SOBRESSALENTES')
-    planilha_preco.cell(row=sobressalente_row, column=1, value=indice)
+    'SV': {
+      'pis_confins': pis_confins_sv,
+      'icms': 0,
+      'iss': iss_bh,
+      'ipi': ipi
+    },
 
-  #LINHAS EM BRANCO
-  i = 1
-  for memo_row in range(1, memo.max_column):
-    conferencia_cell = memo[f'{conferencia_column}{memo_row}']
-    if conferencia_cell.value == "Sobressalentes":
-      complete_cells(sobressalente_row, memo_row, i)
-      i += 1
-  make_taxes(se='Sobressalentes', subtopico='SOBRESSALENTES', pis_confins=pis_confins_eq, icms=icms, iss=0, ipi=ipi, sobressalente_row=sobressalente_row+1)
+    'SO': {
+      'pis_confins': pis_confins_sv,
+      'icms': 0,
+      'iss': iss_bh,
+      'ipi': ipi
+    }
+  }
 
-  #SOMAS
-  total_row = get_total_row()
-  total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
-  for column in total_columns:
-    column_letter = get_column_letter(column)
-    formula = f'=SUM({column_letter}{sobressalente_row+1}:{column_letter}{total_row - 1})'
-    cell = planilha_preco[f'{column_letter}{sobressalente_row}']
-    cell.value = formula
+  titles = get_other_titles_names()
 
-  #ÍNDICE
-  i = 1
-  for row in range(sobressalente_row + 1, total_row):
-    cell = planilha_preco[f'A{row}']
-    cell.value = f'=A{sobressalente_row} & ".{i}"'
+  for title in titles:
+    
+    indice_inicial = len(get_se_names())
+    total_row = get_total_row()
+    planilha_preco.insert_rows(total_row, 1)
+    title_row = total_row
+
+    #TÍTULO
+    for planilha_preco_column in range(1, planilha_preco.max_column + 1):
+      indice = indice_inicial + titles.index(title) + 1
+      copy_cell = styles[f'{get_column_letter(planilha_preco_column)}1']
+      new_cell = planilha_preco.cell(row=title_row, column=planilha_preco_column, value=None)
+      new_cell._style = copy(copy_cell._style)
+      planilha_preco.cell(row=title_row, column=2, value=title)
+      planilha_preco.cell(row=title_row, column=1, value=indice)
+
+    #LINHAS EM BRANCO
+    i = 1
+    for memo_row in range(1, memo.max_column):
+      conferencia_cell = memo[f'Z{memo_row}']
+      qte_cell = memo[f'{qte_column}{memo_row}']
+  
+      if conferencia_cell.value == title and qte_cell.value != None and qte_cell.value > 0:
+        taxes_type = memo[f'{type_column}{memo_row}'].value
+        complete_cells(title_row, memo_row, i)
+        pis_confins = taxes[taxes_type]['pis_confins']
+        print(pis_confins)
+        _icms = taxes[taxes_type]['icms']
+        iss = taxes[taxes_type]['iss']
+        _ipi = taxes[taxes_type]['ipi']
+        make_taxes(se=title, subtopico=title, pis_confins=pis_confins, icms=_icms, iss=iss, ipi=_ipi, title_row=title_row + i)
+        i += 1
+    #SOMAS
+  
+    total_row = get_total_row()
+    total_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+    for column in total_columns:
+      column_letter = get_column_letter(column)
+      formula = f'=SUM({column_letter}{title_row + 1}:{column_letter}{total_row - 1})'
+      cell = planilha_preco[f'{column_letter}{title_row}']
+      cell.value = formula
+
+    #ÍNDICE
+    i = 1
+    for row in range(title_row + 1, total_row):
+      cell = planilha_preco[f'A{row}']
+      cell.value = f'=A{title_row} & ".{i}"'
 
 def get_se_status(se):
   se_status = {
@@ -646,7 +696,6 @@ def get_se_status(se):
     cell = memo[f'{conferencia_column}{memo_row}']
     qte_cell  = memo[f'{qte_column}{memo_row}']
     se_name_cell = memo[f'{subestacao_column}{memo_row}']
-    descricao_cell = memo[f'{descricao_column}{memo_row}']
 
     if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
         if qte_cell.value > 0 and se_name_cell.value == se:
@@ -691,9 +740,9 @@ def build():
     make_montagem(se, se_names)
     make_servicos_gerais(se)
     make_sums(se)
-    make_indices(se)
+    make_indice_inicials(se)
   
-  make_sobressalentes()
+  make_other_titles()
   make_total_sums()
   make_resumo()
   
