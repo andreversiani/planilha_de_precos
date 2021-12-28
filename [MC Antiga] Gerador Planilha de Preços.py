@@ -35,6 +35,7 @@ TITLES = {
 
 #sheet names
 planilha_preco_sheet_name = 'Planilha de Preço'
+planilha_preco_base_sheet_name = 'Base Planilha de Preço'
 planilha_resumo_sheet_name = 'Planilha Resumo'
 boilerplate_sheet_name = 'Boilerplate'
 styles_sheet_name = 'Styles'
@@ -94,6 +95,38 @@ TAXES = {
   }
 }
 
+
+try:
+  planilha_preco_name, mc_name = get_mc_name()
+  wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
+  wb_mc = load_workbook(mc_name, data_only=True)
+
+  planilha_preco_sheet_names = wb_planilha_preco.sheetnames
+  planilha_preco_base = wb_planilha_preco[planilha_preco_base_sheet_name]
+  
+  planilha_preco = wb_planilha_preco.copy_worksheet(planilha_preco_base)
+
+  if planilha_preco_sheet_name in planilha_preco_sheet_names:
+    wb_planilha_preco.remove(wb_planilha_preco.worksheets[planilha_preco_sheet_names.index(planilha_preco_sheet_name)])
+
+  if planilha_resumo_sheet_name in planilha_preco_sheet_names:
+    wb_planilha_preco.remove(wb_planilha_preco.worksheets[planilha_preco_sheet_names.index(planilha_resumo_sheet_name)])
+
+  planilha_preco.title = 'Planilha de Preço'
+  planilha_preco.sheet_view.showGridLines = False
+  
+  resumo = wb_planilha_preco.copy_worksheet(planilha_preco_base)
+  resumo.title = 'Planilha Resumo'
+  resumo.sheet_view.showGridLines = False
+  
+  styles = wb_planilha_preco[styles_sheet_name]
+  memo = wb_mc[memo_sheet_name]
+  db = wb_mc[db_sheet_name]
+
+except Exception as error:
+  print(str(error))
+  exit()
+
 def qtd_validador(row, se):
   if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
     return True
@@ -122,19 +155,6 @@ def make_item(se, white_list, type):
           taxes = TAXES[taxes_type]
           complete_cells(planilha_preco_row, memo_row, i, taxes)
 
-try:
-  planilha_preco_name, mc_name = get_mc_name()
-  wb_planilha_preco = load_workbook(planilha_preco_name, data_only=True)
-  wb_mc = load_workbook(mc_name, data_only=True)
-  planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
-  resumo = wb_planilha_preco[planilha_resumo_sheet_name]
-  styles = wb_planilha_preco[styles_sheet_name]
-  memo = wb_mc[memo_sheet_name]
-  db = wb_mc[db_sheet_name]
-
-except Exception as error:
-  print(str(error))
-  exit()
 
 def get_se_row(se):
   for row in range(1, planilha_preco.max_row):
@@ -711,7 +731,7 @@ def build():
   make_resumo()
   
   try:
-    wb_planilha_preco.save('Teste.xlsx')
+    wb_planilha_preco.save(planilha_preco_name)
   except Exception as error:
     print("Feche a MC antes de rodar o Gerador de Planilha de Preços")
 
