@@ -14,6 +14,25 @@ def get_mc_name():
 
   return planilha_preco_name, mc_name
 
+
+TITLES = {
+  'ENGENHARIA': {
+  'white_list': ['Projetos']
+  },
+
+  'CIVIL': {
+    'white_list': ['Obras Civis', 'Canteiro / Mobilização']
+  },
+
+  'MONTAGEM': {
+    'white_list': ['Montagem Eletromecânica', 'Materiais', 'Eletrocentro']
+  },
+
+  'SERVIÇOS GERAIS': {
+    'white_list': ['Treinamento', 'Comissionamento', 'Supervisão de Montagem', 'Administração de Obra', 'Frete', 'Despesas de Viagem']
+  }
+}
+
 #sheet names
 planilha_preco_sheet_name = 'Planilha de Preço'
 planilha_resumo_sheet_name = 'Planilha Resumo'
@@ -656,17 +675,34 @@ def make_sums(se):
   make_eletrica_sums(se)
   if se_status['casa_comando']:
     make_casa_comando_sums(se)
-    
+
+ENGENHARIA = {
+  'white_list': ['Projetos']
+}
+
+CIVIL = {
+  'white_list': ['Obras Civis', 'Canteiro / Mobilização']
+}
+
+MONTAGEM = {
+  'white_list': ['Montagem Eletromecânica', 'Materiais', 'Eletrocentro']
+}
+
+MONTAGEM = {
+  'white_list': ['Treinamento', 'Comissionamento', 'Supervisão de Montagem', 'Administração de Obra', 'Frete', 'Despesas de Viagem']
+}
+
+
 def build():
   se_names = get_se_names()
   make_titles(se_names)
   make_se_names_header()
   for se in se_names:
-    make_item(se, ['Projetos'], 'ENGENHARIA')
+    make_item(se, TITLES['ENGENHARIA']['white_list'], list(TITLES)[0])
     make_eletrica(se)
-    make_item(se, ['Obras Civis', 'Canteiro / Mobilização'], 'CIVIL')
-    make_item(se, ['Montagem Eletromecânica', 'Materiais', 'Eletrocentro'], 'MONTAGEM')
-    make_item(se, ['Treinamento', 'Comissionamento', 'Supervisão de Montagem', 'Administração de Obra', 'Frete', 'Despesas de Viagem'], 'SERVIÇOS GERAIS')
+    make_item(se, TITLES['CIVIL']['white_list'], list(TITLES)[1])
+    make_item(se, TITLES['MONTAGEM']['white_list'], list(TITLES)[2])
+    make_item(se, TITLES['SERVIÇOS GERAIS']['white_list'], list(TITLES)[3])
     make_sums(se)
     make_indice_inicials(se)
   
