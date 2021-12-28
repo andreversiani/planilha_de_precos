@@ -82,13 +82,10 @@ def qtd_validador(row, se):
     return False
 
 def make_item(se, white_list, type):
- 
   i = 0
   se_count = 0
-  se_status = get_se_status(se)
   se_names = get_se_names()
-  title_row = se_status['first_row']
-  
+
   print(f'{se.upper()} | Escrevendo a parte de {type}')
   
   for planilha_preco_row in range(8, 1000):
@@ -103,9 +100,8 @@ def make_item(se, white_list, type):
         if conferencia_value in white_list and qtd_validador(memo_row, se):
           taxes_type = memo[f'{type_column}{memo_row}'].value
           i += 1
-          complete_cells(planilha_preco_row, memo_row, i)
           taxes = TAXES[taxes_type]
-          make_taxes(planilha_preco_row + i, taxes)
+          complete_cells(planilha_preco_row, memo_row, i, taxes)
 
 try:
   planilha_preco_name, mc_name = get_mc_name()
@@ -114,7 +110,6 @@ try:
   planilha_preco = wb_planilha_preco[planilha_preco_sheet_name]
   resumo = wb_planilha_preco[planilha_resumo_sheet_name]
   styles = wb_planilha_preco[styles_sheet_name]
-  #boilerplate = wb_planilha_preco[boilerplate_sheet_name]
   memo = wb_mc[memo_sheet_name]
   db = wb_mc[db_sheet_name]
 
@@ -127,7 +122,7 @@ def get_se_row(se):
     if planilha_preco[f'B{row}'].value == se:
       return row
 
-def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
+def complete_cells(planilha_preco_row, row, i, taxes):
   planilha_preco.insert_rows(planilha_preco_row + i, 1)
   #print(planilha_preco_row)
   #Somas
@@ -145,20 +140,6 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=3, value=f"='[{mc_name}]Memo Geral'!${qte_column}${row}")
   planilha_preco.cell(row=planilha_preco_row + i, column=4, value="R$")
   planilha_preco.cell(row=planilha_preco_row + i, column=16, value=f"='[{mc_name}]Memo Geral'!{preco_impostos_column}${row}")
-  
-  #formulas fixadas nos campos brancos
-  #if not eletrocentro:
-    #planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"=$F${planilha_preco_row+1}")
-    #planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"=$H${planilha_preco_row+1}")
-    #planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"=$J${planilha_preco_row+1}")
-    #planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"=$M${planilha_preco_row+1}")
-
-  #if eletrocentro:
-    #planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{pis_cofins_eq}")
-    #planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{icms} * 100")
-    #planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0)
-    #planilha_preco.cell(row=planilha_preco_row + i, column=13, value=0)
-  
   planilha_preco.cell(row=planilha_preco_row + i, column=5, value=f"=L{planilha_preco_row + i}-K{planilha_preco_row + i}-I{planilha_preco_row + i}-G{planilha_preco_row + i}")
   planilha_preco.cell(row=planilha_preco_row + i, column=7, value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=9, value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
@@ -166,30 +147,29 @@ def complete_cells(planilha_preco_row, row, i, eletrocentro=False):
   planilha_preco.cell(row=planilha_preco_row + i, column=12, value=f"=P{planilha_preco_row + i}/(1+M{planilha_preco_row + i}/100)")
   planilha_preco.cell(row=planilha_preco_row + i, column=14, value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
   planilha_preco.cell(row=planilha_preco_row + i, column=15, value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
-
-  #styles
-  for column in range(1, planilha_preco.max_column + 1):
-    cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
-    cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
-
-def make_taxes(row, taxes):
   
+  #Impostos
   _icms = taxes['icms']
   _pis_cofins = taxes['pis_cofins']
   _iss = taxes['iss']
   _ipi = taxes['ipi']
 
   if _icms == 0:
-    planilha_preco.cell(row=row, column=8, value=0) #icms
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=0) #icms
   else:
-    planilha_preco.cell(row=row, column=8, value=f"='[{mc_name}]DashBoard'!{_icms} * 100") #icms
+    planilha_preco.cell(row=planilha_preco_row + i, column=8, value=f"='[{mc_name}]DashBoard'!{_icms} * 100") #icms
   if _iss == 0:
-    planilha_preco.cell(row=row, column=10, value=0) #iss
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=0) #iss
   else:
-    planilha_preco.cell(row=row, column=10, value=f"='[{mc_name}]DashBoard'!{_iss}") #iss
+    planilha_preco.cell(row=planilha_preco_row + i, column=10, value=f"='[{mc_name}]DashBoard'!{_iss}") #iss
     
-  planilha_preco.cell(row=row, column=6, value=f"='[{mc_name}]DashBoard'!{_pis_cofins}") #pis/confins 
-  planilha_preco.cell(row=row, column=13, value=f"='[{mc_name}]DashBoard'!{_ipi}") #ipi
+  planilha_preco.cell(row=planilha_preco_row + i, column=6, value=f"='[{mc_name}]DashBoard'!{_pis_cofins}") #pis/confins 
+  planilha_preco.cell(row=planilha_preco_row + i, column=13, value=f"='[{mc_name}]DashBoard'!{_ipi}") #ipi
+  
+  #styles
+  for column in range(1, planilha_preco.max_column + 1):
+    cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
+    cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
 
 
 def get_se_names():
@@ -278,14 +258,13 @@ def make_equipamentos(se):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == "Demais equipamentos de pátio" or cell.value == "GIS / Módulo Híbrido" or cell.value == "Transformador de Força":
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row + 1, row, i)
             taxes_type = memo[f'{type_column}{row}'].value
             taxes = TAXES[taxes_type]
-            make_taxes(planilha_preco_row + i  + 1, taxes)
+            complete_cells(planilha_preco_row + 1, row, i, taxes)
             i += 1
 
 def make_casa(se):
-  exit = True
+  exit = True 
   for memo_row in range(1, memo.max_row + 1):
     cell = memo[f'{conferencia_column}{memo_row}']
     if cell.value == "Cubículos" or cell.value == "Proteção, medição e controle" or cell.value == "Telecomunicações":
@@ -344,10 +323,9 @@ def make_casa_itens(se, memo_value, planilha_precos_title):
         cell = memo[f'{conferencia_column}{row}']
         if cell.value == memo_value:
           if memo[f'{subestacao_column}{row}'].value == se and int(memo[f'{qte_column}{row}'].value) >= 1:
-            complete_cells(planilha_preco_row, row, i)
             taxes_type = memo[f'{type_column}{row}'].value
             taxes = TAXES[taxes_type]
-            make_taxes(planilha_preco_row + i, taxes)
+            complete_cells(planilha_preco_row, row, i, taxes)
             i += 1
 
 def make_eletrica(se):
@@ -600,9 +578,8 @@ def make_other_titles():
   
       if conferencia_cell.value == title and qte_cell.value != None and qte_cell.value > 0:
         taxes_type = memo[f'{type_column}{memo_row}'].value
-        complete_cells(title_row, memo_row, i)
         taxes = TAXES[taxes_type]
-        make_taxes(title_row + i, taxes)
+        complete_cells(title_row, memo_row, i, taxes)
         i += 1
     #SOMAS
   
