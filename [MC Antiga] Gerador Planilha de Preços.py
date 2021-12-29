@@ -184,49 +184,57 @@ def get_se_row(se):
             return row
 
 
+def get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, column):
+    return f'=SUM({column}{first_planilha_preco_row+1}:{column}{last_planilha_preco_row})'
+
+
 def complete_cells(planilha_preco_row, row, i, taxes):
-    planilha_preco.insert_rows(planilha_preco_row + i, 1)
+
+    first_planilha_preco_row = planilha_preco_row
+    last_planilha_preco_row = planilha_preco_row + i
+
+    planilha_preco.insert_rows(last_planilha_preco_row, 1)
 
     # Somas
     planilha_preco.cell(row=planilha_preco_row, column=16,
-                        value=f"=SUM(P{planilha_preco_row+1}:P{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'P'))
     planilha_preco.cell(row=planilha_preco_row, column=15,
-                        value=f"=SUM(O{planilha_preco_row+1}:O{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'O'))
     planilha_preco.cell(row=planilha_preco_row, column=14,
-                        value=f"=SUM(N{planilha_preco_row+1}:N{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'N'))
     planilha_preco.cell(row=planilha_preco_row, column=12,
-                        value=f"=SUM(L{planilha_preco_row+1}:L{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'L'))
     planilha_preco.cell(row=planilha_preco_row, column=11,
-                        value=f"=SUM(K{planilha_preco_row+1}:K{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'K'))
     planilha_preco.cell(row=planilha_preco_row, column=9,
-                        value=f"=SUM(I{planilha_preco_row+1}:I{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'I'))
     planilha_preco.cell(row=planilha_preco_row, column=7,
-                        value=f"=SUM(G{planilha_preco_row+1}:G{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'G'))
     planilha_preco.cell(row=planilha_preco_row, column=5,
-                        value=f"=SUM(E{planilha_preco_row+1}:E{planilha_preco_row+i})")
+                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'E'))
 
     # Campos brancos
-    planilha_preco.cell(row=planilha_preco_row + i, column=2,
+    planilha_preco.cell(row=last_planilha_preco_row, column=2,
                         value=f"='[{mc_name}]Memo Geral'!${descricao_column}${row}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=3,
+    planilha_preco.cell(row=last_planilha_preco_row, column=3,
                         value=f"='[{mc_name}]Memo Geral'!${qte_column}${row}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=4, value="R$")
-    planilha_preco.cell(row=planilha_preco_row + i, column=16,
+    planilha_preco.cell(row=last_planilha_preco_row, column=4, value="R$")
+    planilha_preco.cell(row=last_planilha_preco_row, column=16,
                         value=f"='[{mc_name}]Memo Geral'!{preco_impostos_column}${row}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=5,
-                        value=f"=L{planilha_preco_row + i}-K{planilha_preco_row + i}-I{planilha_preco_row + i}-G{planilha_preco_row + i}")
-    planilha_preco.cell(row=planilha_preco_row + i, column=7,
-                        value=f"=L{planilha_preco_row + i}*F{planilha_preco_row + i}/100")
-    planilha_preco.cell(row=planilha_preco_row + i, column=9,
-                        value=f"=L{planilha_preco_row + i}*H{planilha_preco_row + i}/100")
-    planilha_preco.cell(row=planilha_preco_row + i, column=11,
-                        value=f"=L{planilha_preco_row + i}*J{planilha_preco_row + i}/100")
-    planilha_preco.cell(row=planilha_preco_row + i, column=12,
-                        value=f"=P{planilha_preco_row + i}/(1+M{planilha_preco_row + i}/100)")
-    planilha_preco.cell(row=planilha_preco_row + i, column=14,
-                        value=f"=L{planilha_preco_row + i}*M{planilha_preco_row + i}/100")
-    planilha_preco.cell(row=planilha_preco_row + i, column=15,
-                        value=f"=G{planilha_preco_row + i}+I{planilha_preco_row + i}+K{planilha_preco_row + i}+N{planilha_preco_row + i}")
+    planilha_preco.cell(row=last_planilha_preco_row, column=5,
+                        value=f"=L{last_planilha_preco_row}-K{last_planilha_preco_row}-I{last_planilha_preco_row}-G{last_planilha_preco_row}")
+    planilha_preco.cell(row=last_planilha_preco_row, column=7,
+                        value=f"=L{last_planilha_preco_row}*F{last_planilha_preco_row}/100")
+    planilha_preco.cell(row=last_planilha_preco_row, column=9,
+                        value=f"=L{last_planilha_preco_row}*H{last_planilha_preco_row}/100")
+    planilha_preco.cell(row=last_planilha_preco_row, column=11,
+                        value=f"=L{last_planilha_preco_row}*J{last_planilha_preco_row}/100")
+    planilha_preco.cell(row=last_planilha_preco_row, column=12,
+                        value=f"=P{last_planilha_preco_row}/(1+M{last_planilha_preco_row}/100)")
+    planilha_preco.cell(row=last_planilha_preco_row, column=14,
+                        value=f"=L{last_planilha_preco_row}*M{last_planilha_preco_row}/100")
+    planilha_preco.cell(row=last_planilha_preco_row, column=15,
+                        value=f"=G{last_planilha_preco_row}+I{last_planilha_preco_row}+K{last_planilha_preco_row}+N{last_planilha_preco_row}")
 
     # Impostos
     _icms = taxes['icms']
@@ -235,26 +243,26 @@ def complete_cells(planilha_preco_row, row, i, taxes):
     _ipi = taxes['ipi']
 
     if _icms == 0:
-        planilha_preco.cell(row=planilha_preco_row + i,
+        planilha_preco.cell(row=last_planilha_preco_row,
                             column=8, value=0)  # icms
     else:
-        planilha_preco.cell(row=planilha_preco_row + i, column=8,
+        planilha_preco.cell(row=last_planilha_preco_row, column=8,
                             value=f"='[{mc_name}]DashBoard'!{_icms} * 100")  # icms
     if _iss == 0:
-        planilha_preco.cell(row=planilha_preco_row + i,
+        planilha_preco.cell(row=last_planilha_preco_row,
                             column=10, value=0)  # iss
     else:
-        planilha_preco.cell(row=planilha_preco_row + i, column=10,
+        planilha_preco.cell(row=last_planilha_preco_row, column=10,
                             value=f"='[{mc_name}]DashBoard'!{_iss}")  # iss
 
-    planilha_preco.cell(row=planilha_preco_row + i, column=6,
-                        value=f"='[{mc_name}]DashBoard'!{_pis_cofins}")  # pis/confins
-    planilha_preco.cell(row=planilha_preco_row + i, column=13,
+    planilha_preco.cell(row=last_planilha_preco_row, column=6,
+                        value=f"='[{mc_name}]DashBoard'!{_pis_cofins}")  # pis/cofins
+    planilha_preco.cell(row=last_planilha_preco_row, column=13,
                         value=f"='[{mc_name}]DashBoard'!{_ipi}")  # ipi
 
     # styles
     for column in range(1, planilha_preco.max_column + 1):
-        cell = planilha_preco[f'{get_column_letter(column)}{planilha_preco_row + i}']
+        cell = planilha_preco[f'{get_column_letter(column)}{last_planilha_preco_row}']
         cell._style = copy(styles[f'{get_column_letter(column)}3']._style)
 
 
@@ -797,7 +805,8 @@ def build():
 
     try:
         wb_planilha_preco.save(planilha_preco_name)
-        wb_mc.save(mc_name)
+        print(mc_name)
+        # wb_mc.save(mc_name)
     except Exception as error:
         print("Feche a MC antes de rodar o Gerador de Planilha de Preços")
 
