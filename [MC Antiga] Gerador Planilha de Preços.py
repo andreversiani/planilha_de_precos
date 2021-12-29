@@ -195,23 +195,12 @@ def complete_cells(planilha_preco_row, row, i, taxes):
 
     planilha_preco.insert_rows(last_planilha_preco_row, 1)
 
+    sum_columns = [5, 7, 9, 11, 12, 14, 15, 16]
+
     # Somas
-    planilha_preco.cell(row=planilha_preco_row, column=16,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'P'))
-    planilha_preco.cell(row=planilha_preco_row, column=15,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'O'))
-    planilha_preco.cell(row=planilha_preco_row, column=14,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'N'))
-    planilha_preco.cell(row=planilha_preco_row, column=12,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'L'))
-    planilha_preco.cell(row=planilha_preco_row, column=11,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'K'))
-    planilha_preco.cell(row=planilha_preco_row, column=9,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'I'))
-    planilha_preco.cell(row=planilha_preco_row, column=7,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'G'))
-    planilha_preco.cell(row=planilha_preco_row, column=5,
-                        value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, 'E'))
+    for column in sum_columns:
+        planilha_preco.cell(row=planilha_preco_row, column=column,
+                            value=get_sum_formula(first_planilha_preco_row, last_planilha_preco_row, get_column_letter(column)))
 
     # Campos brancos
     planilha_preco.cell(row=last_planilha_preco_row, column=2,
