@@ -775,16 +775,21 @@ def make_sums(se):
         make_casa_comando_sums(se)
 
 
+def make_items(se):
+    eletrica = True
+    for title in TITLES:
+        make_item(se, TITLES[title]['white_list'], title)
+        if eletrica:
+            make_eletrica(se)
+            eletrica = False
+
+
 def build():
     se_names = get_se_names()
     make_titles(se_names)
     make_se_names_header()
     for se in se_names:
-        make_item(se, TITLES['ENGENHARIA']['white_list'], list(TITLES)[0])
-        make_eletrica(se)
-        make_item(se, TITLES['CIVIL']['white_list'], list(TITLES)[1])
-        make_item(se, TITLES['MONTAGEM']['white_list'], list(TITLES)[2])
-        make_item(se, TITLES['SERVIÇOS GERAIS']['white_list'], list(TITLES)[3])
+        make_items(se)
         make_sums(se)
         make_indice_inicials(se)
 
@@ -794,8 +799,7 @@ def build():
 
     try:
         wb_planilha_preco.save(planilha_preco_name)
-        print(mc_name)
-        # wb_mc.save(mc_name)
+
     except Exception as error:
         print("Feche a MC antes de rodar o Gerador de Planilha de Preços")
 
